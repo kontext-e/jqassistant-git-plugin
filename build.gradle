@@ -1,0 +1,47 @@
+plugins{
+    id 'de.kontext_e.jqassistant.gradle' version "2.0.0"
+    id 'groovy'
+    id 'java'
+    id 'signing'
+    id 'maven-publish'
+}
+
+project.ext["jqaversion"] = "2.1.0"
+project.group = 'de.kontext-e.jqassistant.plugin'
+project.version = '2.1.0'
+
+repositories {
+    maven {
+        url "https://oss.sonatype.org/content/repositories/snapshots"
+    }
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
+}
+
+dependencies {
+    implementation 'com.buschmais.jqassistant.core:scanner:' + project.jqaversion
+    implementation 'com.buschmais.jqassistant.core:report:' + project.jqaversion
+    implementation 'com.buschmais.jqassistant.plugin:common:' + project.jqaversion
+    implementation 'com.buschmais.jqassistant.core:store:' + project.jqaversion
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
+
+    testImplementation 'com.buschmais.jqassistant.core:test:' + project.jqaversion
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
+    testImplementation 'org.mockito:mockito-core:5.11.0'
+
+    testImplementation 'org.slf4j:slf4j-simple:2.0.13'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
+}
+
+jar {
+    archiveBaseName = 'jqassistant.plugin.git'
+}
