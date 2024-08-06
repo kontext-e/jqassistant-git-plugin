@@ -44,16 +44,15 @@ import org.slf4j.LoggerFactory;
  * @author Gerd Aschemann - gerd@aschemann.net - @GerdAschemann
  * @since 1.1.0
  */
-// TODO: Rename this! In fact it is not a Scanner but a Repository!
-class JGitScanner {
+class JGitRepository {
 
-    private static final Logger logger = LoggerFactory.getLogger(JGitScanner.class);
+    private static final Logger logger = LoggerFactory.getLogger(JGitRepository.class);
 
     private final String path;
     private final String range;
-    private final Map<String,GitCommit> commits = new HashMap<>();
+    private final Map<String, GitCommit> commits = new HashMap<>();
 
-    JGitScanner(final String path, String range) {
+    JGitRepository(final String path, String range) {
         this.path = path;
         this.range = range;
     }
@@ -225,7 +224,7 @@ class JGitScanner {
             List<Ref> tags = git.tagList().call();
             for (Ref tagRef : tags) {
                 String label = tagRef.getName();
-                RevCommit firstCommit = resolveFirstCommitForTag (git, tagRef);
+                RevCommit firstCommit = resolveFirstCommitForTag(git, tagRef);
                 String objectId = ObjectId.toString(firstCommit);
                 logger.debug ("Found Tag '{}' (name = '{}', sha = '{}')", tagRef, label, objectId);
                 GitTag newTag = new GitTag (label, objectId);
@@ -241,6 +240,6 @@ class JGitScanner {
     }
 
     public static void main(String[] args) throws IOException {
-        final List<GitCommit> commits = new JGitScanner(".git", null).findCommits();
+        final List<GitCommit> commits = new JGitRepository(".git", null).findCommits();
     }
 }
