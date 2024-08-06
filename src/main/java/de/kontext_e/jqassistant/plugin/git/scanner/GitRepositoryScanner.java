@@ -48,49 +48,63 @@ class GitRepositoryScanner {
     }
 
     void scanGitRepo() throws IOException {
-        JGitScanner jGitScanner = new JGitScanner(gitRepositoryDescriptor.getFileName(), range);
+        JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
-        gitCommits.addAll(jGitScanner.findCommits());
+        gitCommits.addAll(jGitRepository.findCommits());
 
-        addCommits();
-        addBranches(jGitScanner.findBranches());
-        addTags(jGitScanner.findTags());
+        storeCommits();
+        addBranches(jGitRepository.findBranches());
+        addTags(jGitRepository.findTags());
 
         authors.values().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
         committers.values().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         files.values().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
 
-        GitBranch head = jGitScanner.findHead();
+        GitBranch head = jGitRepository.findHead();
         GitCommitDescriptor headDescriptor = commits.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
     }
 
-    private void addCommits() {
-        // First pass: Add the commits to the graph
+    private void storeCommits() {
+        storeCommitNodes();
+        addParentRelationship();
+    }
+
+    private void storeCommitNodes() {
         for (GitCommit gitCommit : gitCommits) {
-            GitCommitDescriptor gitCommitDescriptor = store.create(GitCommitDescriptor.class);
-            String sha = gitCommit.getSha();
-            LOGGER.debug ("Adding new Commit '{}'", sha);
-            commits.put(sha, gitCommitDescriptor);
+            GitCommitDescriptor descriptor = createDescriptorForCommit(gitCommit);
+            addDescriptorToCache(descriptor);
 
-            gitCommitDescriptor.setSha(gitCommit.getSha());
-            gitCommitDescriptor.setAuthor(gitCommit.getAuthor());
-            gitCommitDescriptor.setCommitter(gitCommit.getCommitter());
-            gitCommitDescriptor.setDate(DATE_FORMAT.format(gitCommit.getDate()));
-            gitCommitDescriptor.setMessage(gitCommit.getMessage());
-            gitCommitDescriptor.setShortMessage(gitCommit.getShortMessage());
-            gitCommitDescriptor.setEpoch(gitCommit.getDate().getTime());
-            gitCommitDescriptor.setTime(TIME_FORMAT.format(gitCommit.getDate()));
-            gitCommitDescriptor.setEncoding(gitCommit.getEncoding());
-            gitRepositoryDescriptor.getCommits().add(gitCommitDescriptor);
+            gitRepositoryDescriptor.getCommits().add(descriptor);
 
-            addCommitForAuthor(authors, gitCommit.getAuthor(), gitCommitDescriptor);
-            addCommitForCommitter(committers, gitCommit.getCommitter(), gitCommitDescriptor);
-
-            addCommitFiles(gitCommit, gitCommitDescriptor, files);
+            addCommitForAuthor(authors, gitCommit.getAuthor(), descriptor);
+            addCommitForCommitter(committers, gitCommit.getCommitter(), descriptor);
+            addCommitFiles(gitCommit, descriptor);
         }
+    }
 
-        // Second pass: Add the parents to the graph
+    private GitCommitDescriptor createDescriptorForCommit(GitCommit gitCommit) {
+        GitCommitDescriptor gitCommitDescriptor = store.create(GitCommitDescriptor.class);
+        gitCommitDescriptor.setSha(gitCommit.getSha());
+        gitCommitDescriptor.setAuthor(gitCommit.getAuthor());
+        gitCommitDescriptor.setCommitter(gitCommit.getCommitter());
+        gitCommitDescriptor.setDate(DATE_FORMAT.format(gitCommit.getDate()));
+        gitCommitDescriptor.setMessage(gitCommit.getMessage());
+        gitCommitDescriptor.setShortMessage(gitCommit.getShortMessage());
+        gitCommitDescriptor.setEpoch(gitCommit.getDate().getTime());
+        gitCommitDescriptor.setTime(TIME_FORMAT.format(gitCommit.getDate()));
+        gitCommitDescriptor.setEncoding(gitCommit.getEncoding());
+
+        return gitCommitDescriptor;
+    }
+
+    private void addDescriptorToCache(GitCommitDescriptor gitCommitDescriptor) {
+        String sha = gitCommitDescriptor.getSha();
+        LOGGER.debug ("Adding new Commit '{}'", sha);
+        commits.put(sha, gitCommitDescriptor);
+    }
+
+    private void addParentRelationship() {
         for (GitCommit gitCommit : gitCommits) {
             String sha = gitCommit.getSha();
             GitCommitDescriptor gitCommitDescriptor = commits.get(sha);
@@ -141,39 +155,50 @@ class GitRepositoryScanner {
     }
 
     private void addCommitForAuthor(final Map<String, GitAuthorDescriptor> authors, final String author, final GitCommitDescriptor gitCommit) {
-        if (null != author) {
-            if(! authors.containsKey(author)) {
-                LOGGER.debug ("Adding new author '{}'", author);
-                GitAuthorDescriptor gitAuthor = store.find(GitAuthorDescriptor.class, author);
-                if (null == gitAuthor) {
-                    LOGGER.debug ("Author '{}' does not exist, have to create a new entity", author);
-                    gitAuthor = store.create(GitAuthorDescriptor.class);
-                    gitAuthor.setIdentString(author);
-                }
-                gitAuthor.setName(nameFrom(author));
-                gitAuthor.setEmail(emailFrom(author));
-                authors.put(author, gitAuthor);
-            }
-            authors.get(author).getCommits().add(gitCommit);
+        if (author == null) return;
+
+        if (!authors.containsKey(author)) {
+            LOGGER.debug ("Adding new author '{}'", author);
+            GitAuthorDescriptor gitAuthor = findOrCreateGitAuthorDescriptor(author);
+            authors.put(author, gitAuthor);
         }
+        authors.get(author).getCommits().add(gitCommit);
+    }
+
+    private GitAuthorDescriptor findOrCreateGitAuthorDescriptor(String author) {
+        GitAuthorDescriptor gitAuthor = store.find(GitAuthorDescriptor.class, author);
+        if (gitAuthor == null) {
+            LOGGER.debug ("Author '{}' does not exist, have to create a new entity", author);
+            gitAuthor = store.create(GitAuthorDescriptor.class);
+            gitAuthor.setIdentString(author);
+        }
+        gitAuthor.setName(nameFrom(author));
+        gitAuthor.setEmail(emailFrom(author));
+        return gitAuthor;
     }
 
     private void addCommitForCommitter(final Map<String, GitCommitterDescriptor> committers, final String committer, final GitCommitDescriptor gitCommit) {
-        if (null != committer) {
-            if(! committers.containsKey(committer)) {
-                LOGGER.debug ("Adding new committer '{}'", committer);
-                GitCommitterDescriptor gitCommitter = store.find(GitCommitterDescriptor.class, committer);
-                if (null == gitCommitter) {
-                    LOGGER.debug ("Committer '{}' does not exist, have to create a new entity", committer);
-                    gitCommitter = store.create(GitCommitterDescriptor.class);
-                    gitCommitter.setIdentString(committer);
-                }
-                gitCommitter.setName(nameFrom(committer));
-                gitCommitter.setEmail(emailFrom(committer));
-                committers.put(committer, gitCommitter);
-            }
-            committers.get(committer).getCommits().add(gitCommit);
+        if (committer == null) return;
+
+        if (!committers.containsKey(committer)) {
+            LOGGER.debug ("Adding new committer '{}'", committer);
+            GitCommitterDescriptor gitCommitter = findOrCreateGitCommitterDescriptor(committer);
+
+            gitCommitter.setName(nameFrom(committer));
+            gitCommitter.setEmail(emailFrom(committer));
+            committers.put(committer, gitCommitter);
         }
+        committers.get(committer).getCommits().add(gitCommit);
+    }
+
+    private GitCommitterDescriptor findOrCreateGitCommitterDescriptor(String committer) {
+        GitCommitterDescriptor gitCommitter = store.find(GitCommitterDescriptor.class, committer);
+        if (gitCommitter == null) {
+            LOGGER.debug ("Committer '{}' does not exist, have to create a new entity", committer);
+            gitCommitter = store.create(GitCommitterDescriptor.class);
+            gitCommitter.setIdentString(committer);
+        }
+        return gitCommitter;
     }
 
     private String emailFrom(String author) {
@@ -184,17 +209,17 @@ class GitRepositoryScanner {
         return author.substring(0, author.indexOf("<")).trim();
     }
 
-    private void addCommitFiles(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor, final Map<String, GitFileDescriptor> files) {
+    private void addCommitFiles(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
         for (GitChange gitChange : gitCommit.getGitChanges()) {
             GitChangeDescriptor gitCommitFile = store.create(GitChangeDescriptor.class);
             gitCommitFile.setModificationKind(gitChange.getModificationKind());
             gitCommitDescriptor.getFiles().add(gitCommitFile);
-            addAsGitFile(files, gitChange, gitCommitFile, gitCommit.getDate());
+            addAsGitFile(gitChange, gitCommitFile, gitCommit.getDate());
         }
     }
 
-    private void addAsGitFile(final Map<String, GitFileDescriptor> files, GitChange gitChange, final GitChangeDescriptor gitChangeDescriptor, final Date date) {
-        final GitFileDescriptor gitFileDescriptor = getOrCreateGitFileDescriptor(files, gitChange.getRelativePath());
+    private void addAsGitFile(GitChange gitChange, final GitChangeDescriptor gitChangeDescriptor, final Date date) {
+        final GitFileDescriptor gitFileDescriptor = getOrCreateGitFileDescriptor(gitChange.getRelativePath());
 
         gitChangeDescriptor.setModifies(gitFileDescriptor);
 
@@ -213,15 +238,15 @@ class GitRepositoryScanner {
             gitFileDescriptor.setDeletedAtEpoch(date.getTime());
             gitChangeDescriptor.setDeletes(gitFileDescriptor);
         } else if(isRenameChange(gitChangeDescriptor)) {
-            final GitFileDescriptor oldFile = getOrCreateGitFileDescriptor(files, gitChange.getOldPath());
-            final GitFileDescriptor newFile = getOrCreateGitFileDescriptor(files, gitChange.getNewPath());
+            final GitFileDescriptor oldFile = getOrCreateGitFileDescriptor(gitChange.getOldPath());
+            final GitFileDescriptor newFile = getOrCreateGitFileDescriptor(gitChange.getNewPath());
             oldFile.setHasNewName(newFile);
             gitChangeDescriptor.setRenames(oldFile);
             gitChangeDescriptor.setDeletes(oldFile);
             gitChangeDescriptor.setCreates(newFile);
         } else if(isCopyChange(gitChangeDescriptor)) {
-            final GitFileDescriptor oldFile = getOrCreateGitFileDescriptor(files, gitChange.getOldPath());
-            final GitFileDescriptor newFile = getOrCreateGitFileDescriptor(files, gitChange.getNewPath());
+            final GitFileDescriptor oldFile = getOrCreateGitFileDescriptor(gitChange.getOldPath());
+            final GitFileDescriptor newFile = getOrCreateGitFileDescriptor(gitChange.getNewPath());
             newFile.setCopyOf(oldFile);
             gitChangeDescriptor.setCopies(oldFile);
             gitChangeDescriptor.setCreates(newFile);
@@ -248,7 +273,7 @@ class GitRepositoryScanner {
         return "A".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
     }
 
-    private GitFileDescriptor getOrCreateGitFileDescriptor(final Map<String, GitFileDescriptor> files, String relativePath) {
+    private GitFileDescriptor getOrCreateGitFileDescriptor(String relativePath) {
         GitFileDescriptor gitFileDescriptor = files.get(relativePath);
         if(gitFileDescriptor == null) {
             gitFileDescriptor = store.create(GitFileDescriptor.class);

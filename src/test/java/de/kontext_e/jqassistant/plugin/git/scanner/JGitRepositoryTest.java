@@ -25,12 +25,12 @@ import static org.mockito.Mockito.when;
  * @since 1.1.0
  */
 // TODO This is not a real Unit test! Make gradle run it in some kind of integration test phase!!!
-public class JGitScannerTest {
+public class JGitRepositoryTest {
     @Ignore("No unit test, depends on state of git repo")
     @Test
     public void testFindCommits () throws IOException {
-        JGitScanner jGitScanner = new JGitScanner("../.git", null);
-        List<GitCommit> commits = jGitScanner.findCommits ();
+        JGitRepository jGitRepository = new JGitRepository("../.git", null);
+        List<GitCommit> commits = jGitRepository.findCommits ();
 
         assertThat(commits.size()).isGreaterThan(0);
     }
@@ -38,8 +38,8 @@ public class JGitScannerTest {
     @Ignore("No unit test, depends on state of git repo")
     @Test
     public void testFindTags () throws IOException {
-        JGitScanner jGitScanner = new JGitScanner("../.git", null);
-        List<GitTag> tags = jGitScanner.findTags ();
+        JGitRepository jGitRepository = new JGitRepository("../.git", null);
+        List<GitTag> tags = jGitRepository.findTags ();
 
         assertThat(tags.size()).isGreaterThan(0);
     }
@@ -57,7 +57,7 @@ public class JGitScannerTest {
         when(repository.resolve("HEAD^^")).thenReturn(a1);
         when(repository.resolve("4a877e")).thenReturn(a2);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "HEAD^^..4a877e");
+        JGitRepository.getLogWithOrWithOutRange(git, "HEAD^^..4a877e");
         verify(logCommand).addRange(a1, a2);
     }
 
@@ -75,7 +75,7 @@ public class JGitScannerTest {
         when(repository.resolve("HEAD^^")).thenReturn(a1);
         when(repository.resolve("HEAD")).thenReturn(a2);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "HEAD^^..");
+        JGitRepository.getLogWithOrWithOutRange(git, "HEAD^^..");
         verify(logCommand).addRange(a1, a2);
     }
 
@@ -88,7 +88,7 @@ public class JGitScannerTest {
         when(git.getRepository()).thenReturn(repository);
         when(git.log()).thenReturn(logCommand);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "HEAD^^...master");
+        JGitRepository.getLogWithOrWithOutRange(git, "HEAD^^...master");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -100,7 +100,7 @@ public class JGitScannerTest {
         when(git.getRepository()).thenReturn(repository);
         when(git.log()).thenReturn(logCommand);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "HEAD^^.master");
+        JGitRepository.getLogWithOrWithOutRange(git, "HEAD^^.master");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -113,7 +113,7 @@ public class JGitScannerTest {
         when(git.log()).thenReturn(logCommand);
         when(repository.resolve("NonExistingRev")).thenReturn(null);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "NonExistingRev..master");
+        JGitRepository.getLogWithOrWithOutRange(git, "NonExistingRev..master");
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -128,7 +128,7 @@ public class JGitScannerTest {
         when(repository.resolve("HEAD")).thenReturn(a1);
         when(repository.resolve("NonExistingRev")).thenReturn(null);
 
-        JGitScanner.getLogWithOrWithOutRange(git, "HEAD..NonExistingRev");
+        JGitRepository.getLogWithOrWithOutRange(git, "HEAD..NonExistingRev");
     }
 
 }
