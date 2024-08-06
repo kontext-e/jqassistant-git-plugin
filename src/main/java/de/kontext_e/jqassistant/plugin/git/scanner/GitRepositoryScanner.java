@@ -1,6 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import com.buschmais.xo.api.Query.Result;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
@@ -25,6 +26,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.buschmais.xo.api.Query.Result.*;
+
 class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
 
@@ -34,7 +37,7 @@ class GitRepositoryScanner {
 
     private final Store store;
     private final GitRepositoryDescriptor gitRepositoryDescriptor;
-    private final String range;
+    private String range;
     private final Map<String, GitAuthorDescriptor> authors = new HashMap<>();
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
@@ -48,6 +51,15 @@ class GitRepositoryScanner {
     }
 
     void scanGitRepo() throws IOException {
+        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit();
+        if (latestScannedCommit != null) {
+            //Override range with last scanned Commit to avoid unnecessary scanning.
+            range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
+            LOGGER.debug("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
+            //Add descriptor to cache to it can be used for parentOf-Relations
+            commits.put(latestScannedCommit.getSha(), latestScannedCommit);
+        }
+
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
         gitCommits.addAll(jGitRepository.findCommits());
@@ -63,6 +75,17 @@ class GitRepositoryScanner {
         GitBranch head = jGitRepository.findHead();
         GitCommitDescriptor headDescriptor = commits.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
+    }
+
+    private GitCommitDescriptor getLatestScannedCommit() {
+        String query = "MATCH (c:Commit) return c order by c.epoch desc limit 1";
+        try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
+            GitCommitDescriptor descriptor = queryResult.iterator().next().get("c", GitCommitDescriptor.class);
+            return descriptor;
+        } catch (Exception e) {
+            LOGGER.error("Error while looking for most recent scanned commit: "+ e);
+            return null;
+        }
     }
 
     private void storeCommits() {
