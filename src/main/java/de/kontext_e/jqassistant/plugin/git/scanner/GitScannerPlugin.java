@@ -28,43 +28,53 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
     private static final Set<String> scannedPaths = new HashSet<>();
     private String range = null;
 
-    @Override
+
     /*
      * Check whether this is the start of a git repository.
      *
      * If the path is "/HEAD" and the file (behind item) lives in a directory called ".git" this must be a git
      * repository and the scanner may perform it's work on it (call to "scan" method).
      */
+    @Override
     public boolean accepts(final FileResource item, final String path, final Scope scope) {
         try {
-            if(path.endsWith("/HEAD")) {
-                final File gitDirectory = item.getFile();
-                LOGGER.debug("Checking path {} / dir {}", path, gitDirectory);
-                final Path absolutePath = gitDirectory.toPath().toAbsolutePath();
-                boolean isGitDir = ".git".equals(absolutePath.getParent().toFile().getName());
-                if (!isGitDir) {
-                    return false;
-                } else {
-                    final String pathToGitProject = gitDirectory.toPath().getParent().toFile().getAbsolutePath();
-                    if(scannedPaths.contains(pathToGitProject)) {
-                        // in some maven project layouts, the .git repo is offered in every subproject
-                        // but needs to be imported only once
-                        return false;
-                    }
-                    scannedPaths.add(pathToGitProject);
-                    LOGGER.info("Accepted Git project in '{}'", pathToGitProject);
-                    return true;
-                }
-            }
+            final String pathToGitProject = item.getFile().toPath().getParent().toFile().getAbsolutePath();
 
-            return false;
+            if (!isGitDirectory(path, item)) return false;
+            if (isNestedGitRepo(pathToGitProject)) return false;
+
+            LOGGER.info("Accepted Git project in '{}'", pathToGitProject);
+            return true;
         } catch (NullPointerException e) {
-            // could do a lengthy null check at beginning or do it the short dirty way
             return false;
         } catch (Exception e) {
-            LOGGER.error("Error while checking path: "+e, e);
+            LOGGER.error("Error while checking path: {}", e, e);
             return false;
         }
+    }
+
+    private static boolean isGitDirectory(String path, FileResource gitDirectory) {
+        if (!path.endsWith("/HEAD")) return false;
+
+        LOGGER.debug("Checking path {} / dir {}", path, gitDirectory);
+        final Path absolutePath;
+
+        try {
+            absolutePath = gitDirectory.getFile().toPath().toAbsolutePath();
+        } catch (IOException e) {
+            return false;
+        }
+
+        return absolutePath.getParent().toFile().getName().equals(".git");
+    }
+
+    private static boolean isNestedGitRepo(String pathToGitProject) {
+        // in some maven project layouts, the .git repo is offered in every subproject
+        // but needs to be imported only once
+        if (scannedPaths.contains(pathToGitProject)) return true;
+
+        scannedPaths.add(pathToGitProject);
+        return false;
     }
 
     @Override
@@ -96,11 +106,6 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         gitRepositoryDescriptor.setFileName(pathToGitProject);
     }
 
-    private void setRange (String range) {
-        this.range = range;
-        LOGGER.info ("Git plugin has configured range '{}'", range);
-    }
-
     @Override
     protected void configure() {
         super.configure();
@@ -116,5 +121,10 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
                 setRange(rangeProperty);
             }
         }
+    }
+
+    private void setRange (String range) {
+        this.range = range;
+        LOGGER.info ("Git plugin has configured range '{}'", range);
     }
 }
