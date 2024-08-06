@@ -1,4 +1,4 @@
-package de.kontext_e.jqassistant.plugin.git.scanner;
+package de.kontext_e.jqassistant.plugin.git.scanner.model;
 
 /**
  * A Git Branch.

@@ -2,6 +2,9 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import java.io.IOException;
 import java.util.List;
+
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.lib.ObjectId;

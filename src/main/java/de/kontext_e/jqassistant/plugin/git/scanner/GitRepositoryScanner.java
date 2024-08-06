@@ -1,6 +1,10 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitAuthorDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitChangeDescriptor;
