@@ -7,6 +7,11 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.LogCommand;

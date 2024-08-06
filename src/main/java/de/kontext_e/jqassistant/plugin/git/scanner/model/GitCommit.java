@@ -1,4 +1,4 @@
-package de.kontext_e.jqassistant.plugin.git.scanner;
+package de.kontext_e.jqassistant.plugin.git.scanner.model;
 
 import java.util.Date;
 import java.util.LinkedList;
@@ -15,58 +15,58 @@ public class GitCommit {
     private final List<GitCommit> parents = new LinkedList<>();
     private String encoding;
 
-    GitCommit(final String sha) {
+    public GitCommit(final String sha) {
         this.sha = sha;
     }
 
-    String getSha() {
+    public String getSha() {
         return sha;
     }
 
     public String getAuthor() {
         return author;
     }
-    protected void setAuthor (final String author) {this.author = author;}
+    public void setAuthor(final String author) {this.author = author;}
 
-    String getCommitter() {
+    public String getCommitter() {
         return committer;
     }
 
-    void setCommitter(final String committer) {
+    public void setCommitter(final String committer) {
         this.committer = committer;
     }
 
-    Date getDate() {
+    public Date getDate() {
         return date;
     }
-    void setDate(final Date date) {this.date = date;}
+    public void setDate(final Date date) {this.date = date;}
 
-    String getMessage() {
+    public String getMessage() {
         return message;
     }
-    void setMessage(String message) {this.message = message;}
+    public void setMessage(String message) {this.message = message;}
 
-    String getShortMessage() {
+    public String getShortMessage() {
         return shortMessage;
     }
 
-    void setShortMessage(final String shortMessage) {
+    public void setShortMessage(final String shortMessage) {
         this.shortMessage = shortMessage;
     }
 
-    List<GitChange> getGitChanges() {
+    public List<GitChange> getGitChanges() {
         return gitChanges;
     }
 
-    List<GitCommit> getParents() {
+    public  List<GitCommit> getParents() {
         return parents;
     }
 
-    void setEncoding(final String encoding) {
+    public void setEncoding(final String encoding) {
         this.encoding = encoding;
     }
 
-    String getEncoding() {
+    public String getEncoding() {
         return encoding;
     }
 
