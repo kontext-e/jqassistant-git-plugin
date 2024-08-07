@@ -25,8 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.getLatestScannedCommit;
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.importExistingBranchesFromStore;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.*;
 
 class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
@@ -43,6 +42,7 @@ class GitRepositoryScanner {
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Map<String, GitCommitDescriptor> commits = new HashMap<>();
     private final Map<String, GitBranchDescriptor> branches;
+    private final Map<String, GitTagDescriptor> tags;
     private final List<GitCommit> gitCommits = new ArrayList<>();
 
     GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
@@ -51,6 +51,7 @@ class GitRepositoryScanner {
         this.range = range;
 
         this.branches = importExistingBranchesFromStore(store);
+        this.tags = importExistingTagsFromStore(store);
     }
 
     void scanGitRepo() throws IOException {
@@ -70,9 +71,9 @@ class GitRepositoryScanner {
 
         storeCommits();
         addBranches(jGitRepository.findBranches());
-        //TODO Avoid duplicate scanning
         addTags(jGitRepository.findTags());
 
+        //TODO Avoid duplicate scanning
         authors.values().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
         committers.values().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         files.values().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
@@ -165,19 +166,26 @@ class GitRepositoryScanner {
 
     private void addTags(List<GitTag> tags) {
         for (GitTag gitTag : tags) {
-            GitTagDescriptor gitTagDescriptor = store.create(GitTagDescriptor.class);
-            String label = gitTag.getLabel();
-            label = label.replaceFirst("refs/tags/", "");
-            String sha = gitTag.getCommitSha();
-            LOGGER.debug ("Adding new Tag '{}' with Commit '{}'", label, sha);
-            gitTagDescriptor.setLabel(label);
-            GitCommitDescriptor gitCommitDescriptor = commits.get(sha);
+            GitTagDescriptor gitTagDescriptor = findOrCreateTagDescriptor(gitTag);
+            GitCommitDescriptor gitCommitDescriptor = commits.get(gitTag.getCommitSha());
             if (null == gitCommitDescriptor) {
-                LOGGER.warn ("Cannot retrieve commit '{}' for tag '{}'", sha, label);
+                LOGGER.warn ("Cannot retrieve commit '{}' for tag '{}'", gitTag.getCommitSha(), gitTagDescriptor.getLabel());
             }
             gitTagDescriptor.setCommit(gitCommitDescriptor);
             gitRepositoryDescriptor.getTags().add(gitTagDescriptor);
         }
+    }
+
+    private GitTagDescriptor findOrCreateTagDescriptor(GitTag gitTag){
+        String label = gitTag.getLabel().replaceFirst("refs/tags/", "");
+        if (tags.containsKey(label)){
+            return tags.get(label);
+        }
+        GitTagDescriptor gitTagDescriptor = store.create(GitTagDescriptor.class);
+        String sha = gitTag.getCommitSha();
+        LOGGER.debug ("Adding new Tag '{}' with Commit '{}'", label, sha);
+        gitTagDescriptor.setLabel(label);
+        return gitTagDescriptor;
     }
 
     private void addCommitForAuthor(final Map<String, GitAuthorDescriptor> authors, final String author, final GitCommitDescriptor gitCommit) {
