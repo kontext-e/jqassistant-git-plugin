@@ -3,10 +3,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 import com.buschmais.jqassistant.core.store.api.Store;
 import com.buschmais.xo.api.Query.Result;
 import com.buschmais.xo.api.Query.Result.CompositeRowObject;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitTagDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +69,15 @@ public class JQAssistantGitRepository {
         String query = String.format("MATCH (c:Commit) where c.sha = '%s' return c", sha);
         try (Result<CompositeRowObject> result = store.executeQuery(query)){
             return result.iterator().next().get("c", GitCommitDescriptor.class);
+        } catch (NoSuchElementException e){
+            return null;
+        }
+    }
+
+    public static GitAuthorDescriptor getAuthorDescriptorFromDB(Store store, String identString) {
+        String query = String.format("MATCH (a:Author) where a.identString = '%s' return a", identString);
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("a", GitAuthorDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
         }
