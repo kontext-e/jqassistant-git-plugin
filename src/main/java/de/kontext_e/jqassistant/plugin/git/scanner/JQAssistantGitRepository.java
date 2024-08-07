@@ -6,6 +6,7 @@ import com.buschmais.xo.api.Query.Result.CompositeRowObject;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitTagDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,21 @@ public class JQAssistantDB {
             return branches;
         } catch (Exception e) {
             LOGGER.error("Error while importing existing git branches", e);
+        }
+        return new HashMap<>();
+    }
+
+    static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store) {
+        String query = "Match (t:Tag) return t";
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            Map<String, GitTagDescriptor> tags = new HashMap<>();
+            for (CompositeRowObject row : result) {
+                GitTagDescriptor descriptor = row.get("t", GitTagDescriptor.class);
+                tags.put(descriptor.getLabel(), descriptor);
+            }
+            return tags;
+        } catch (Exception e) {
+            LOGGER.error("Error while importing existing git tags", e);
         }
         return new HashMap<>();
     }
