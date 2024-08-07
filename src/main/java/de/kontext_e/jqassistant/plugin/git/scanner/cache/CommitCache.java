@@ -6,7 +6,7 @@ import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.getCommitDescriptorFromDB;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getCommitDescriptorFromDB;
 
 public class CommitCache {
 

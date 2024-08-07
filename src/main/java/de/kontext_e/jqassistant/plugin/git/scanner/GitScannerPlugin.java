@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.getExistingRepositoryDescriptor;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getExistingRepositoryDescriptor;
 
 /**
  * @author jn4, Kontext E GmbH

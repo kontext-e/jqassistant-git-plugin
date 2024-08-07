@@ -14,9 +14,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-public class JQAssistantDB {
+public class JQAssistantGitRepository {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantDB.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantGitRepository.class);
 
     static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store) {
         String query = "Match (b:Branch) return b";
