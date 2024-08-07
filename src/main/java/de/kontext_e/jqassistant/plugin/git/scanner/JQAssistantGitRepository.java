@@ -68,4 +68,13 @@ public class JQAssistantDB {
         }
     }
 
+    public static GitCommitDescriptor getCommitDescriptorFromDB(Store store, String sha) {
+        String query = String.format("MATCH (c:Commit) where c.sha = '%s' return c", sha);
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("c", GitCommitDescriptor.class);
+        } catch (NoSuchElementException e){
+            return null;
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
@@ -19,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,19 +36,20 @@ class GitRepositoryScanner {
 
     private final Store store;
     private final GitRepositoryDescriptor gitRepositoryDescriptor;
+    private final CommitCache commitCache;
     private String range;
     private final Map<String, GitAuthorDescriptor> authors = new HashMap<>();
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
-    private final Map<String, GitCommitDescriptor> commits = new HashMap<>();
     private final Map<String, GitBranchDescriptor> branches;
     private final Map<String, GitTagDescriptor> tags;
-    private final List<GitCommit> gitCommits = new ArrayList<>();
 
     GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
         this.store = store;
         this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.range = range;
+
+        this.commitCache = new CommitCache(store);
 
         this.branches = importExistingBranchesFromStore(store);
         this.tags = importExistingTagsFromStore(store);
@@ -60,16 +61,14 @@ class GitRepositoryScanner {
             //Override range with last scanned Commit to avoid unnecessary scanning.
             range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
             LOGGER.debug("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
-            //Add descriptor to cache to it can be used for parentOf-Relations
-            commits.put(latestScannedCommit.getSha(), latestScannedCommit);
         }
         LOGGER.debug("No commit found - Repository was not yet scanned, doing scan according to specified range");
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
-        gitCommits.addAll(jGitRepository.findCommits());
+        List<GitCommit> newCommits = jGitRepository.findCommits();
 
-        storeCommits();
+        storeCommits(newCommits);
         addBranches(jGitRepository.findBranches());
         addTags(jGitRepository.findTags());
 
@@ -79,17 +78,17 @@ class GitRepositoryScanner {
         files.values().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
 
         GitBranch head = jGitRepository.findHead();
-        GitCommitDescriptor headDescriptor = commits.get(head.getCommitSha());
+        GitCommitDescriptor headDescriptor = commitCache.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
     }
 
-    private void storeCommits() {
-        storeCommitNodes();
-        addParentRelationship();
+    private void storeCommits(List<GitCommit> newCommits) {
+        storeCommitNodes(newCommits);
+        addParentRelationship(newCommits);
     }
 
-    private void storeCommitNodes() {
-        for (GitCommit gitCommit : gitCommits) {
+    private void storeCommitNodes(List<GitCommit> newCommits) {
+        for (GitCommit gitCommit : newCommits) {
             GitCommitDescriptor descriptor = createDescriptorForCommit(gitCommit);
             addDescriptorToCache(descriptor);
 
@@ -119,16 +118,16 @@ class GitRepositoryScanner {
     private void addDescriptorToCache(GitCommitDescriptor gitCommitDescriptor) {
         String sha = gitCommitDescriptor.getSha();
         LOGGER.debug ("Adding new Commit '{}'", sha);
-        commits.put(sha, gitCommitDescriptor);
+        commitCache.addToCache(gitCommitDescriptor);
     }
 
-    private void addParentRelationship() {
-        for (GitCommit gitCommit : gitCommits) {
+    private void addParentRelationship(List<GitCommit> newCommits) {
+        for (GitCommit gitCommit : newCommits) {
             String sha = gitCommit.getSha();
-            GitCommitDescriptor gitCommitDescriptor = commits.get(sha);
+            GitCommitDescriptor gitCommitDescriptor = commitCache.get(sha);
             for (GitCommit parent : gitCommit.getParents()) {
                 String parentSha = parent.getSha();
-                GitCommitDescriptor parentCommit = commits.get(parentSha);
+                GitCommitDescriptor parentCommit = commitCache.get(parentSha);
                 if (null == parentCommit) {
                     LOGGER.warn ("Cannot add (parent) commit with SHA '{}' (excluded by range?)", parentSha);
                 } else {
@@ -141,7 +140,7 @@ class GitRepositoryScanner {
     private void addBranches(List<GitBranch> branches) {
         for (GitBranch gitBranch : branches) {
             GitBranchDescriptor gitBranchDescriptor = findOrCreateGitBranchDescriptor(gitBranch);
-            GitCommitDescriptor gitCommitDescriptor = commits.get(gitBranch.getCommitSha());
+            GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitBranch.getCommitSha());
             if (null == gitCommitDescriptor) {
                 LOGGER.warn ("Cannot retrieve commit '{}' for branch '{}'", gitBranch.getCommitSha(), gitBranchDescriptor.getName());
             }
@@ -167,7 +166,7 @@ class GitRepositoryScanner {
     private void addTags(List<GitTag> tags) {
         for (GitTag gitTag : tags) {
             GitTagDescriptor gitTagDescriptor = findOrCreateTagDescriptor(gitTag);
-            GitCommitDescriptor gitCommitDescriptor = commits.get(gitTag.getCommitSha());
+            GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitTag.getCommitSha());
             if (null == gitCommitDescriptor) {
                 LOGGER.warn ("Cannot retrieve commit '{}' for tag '{}'", gitTag.getCommitSha(), gitTagDescriptor.getLabel());
             }
