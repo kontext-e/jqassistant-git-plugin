@@ -1,6 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import de.kontext_e.jqassistant.plugin.git.scanner.cache.AuthorCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
@@ -37,8 +38,8 @@ class GitRepositoryScanner {
     private final Store store;
     private final GitRepositoryDescriptor gitRepositoryDescriptor;
     private final CommitCache commitCache;
+    private final AuthorCache authorCache;
     private String range;
-    private final Map<String, GitAuthorDescriptor> authors = new HashMap<>();
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Map<String, GitBranchDescriptor> branches;
@@ -50,6 +51,7 @@ class GitRepositoryScanner {
         this.range = range;
 
         this.commitCache = new CommitCache(store);
+        this.authorCache = new AuthorCache(store);
 
         this.branches = importExistingBranchesFromStore(store);
         this.tags = importExistingTagsFromStore(store);
@@ -72,8 +74,8 @@ class GitRepositoryScanner {
         addBranches(jGitRepository.findBranches());
         addTags(jGitRepository.findTags());
 
+        authorCache.getAuthors().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
         //TODO Avoid duplicate scanning
-        authors.values().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
         committers.values().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         files.values().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
 
@@ -94,7 +96,7 @@ class GitRepositoryScanner {
 
             gitRepositoryDescriptor.getCommits().add(descriptor);
 
-            addCommitForAuthor(authors, gitCommit.getAuthor(), descriptor);
+            addCommitForAuthor(gitCommit.getAuthor(), descriptor);
             addCommitForCommitter(committers, gitCommit.getCommitter(), descriptor);
             addCommitFiles(gitCommit, descriptor);
         }
@@ -187,28 +189,13 @@ class GitRepositoryScanner {
         return gitTagDescriptor;
     }
 
-    private void addCommitForAuthor(final Map<String, GitAuthorDescriptor> authors, final String author, final GitCommitDescriptor gitCommit) {
+    private void addCommitForAuthor(final String author, final GitCommitDescriptor gitCommit) {
         if (author == null) return;
 
-        if (!authors.containsKey(author)) {
-            LOGGER.debug ("Adding new author '{}'", author);
-            GitAuthorDescriptor gitAuthor = findOrCreateGitAuthorDescriptor(author);
-            authors.put(author, gitAuthor);
-        }
-        authors.get(author).getCommits().add(gitCommit);
+        GitAuthorDescriptor authorDescriptor = authorCache.findOrCreate(author);
+        authorDescriptor.getCommits().add(gitCommit);
     }
 
-    private GitAuthorDescriptor findOrCreateGitAuthorDescriptor(String author) {
-        GitAuthorDescriptor gitAuthor = store.find(GitAuthorDescriptor.class, author);
-        if (gitAuthor == null) {
-            LOGGER.debug ("Author '{}' does not exist, have to create a new entity", author);
-            gitAuthor = store.create(GitAuthorDescriptor.class);
-            gitAuthor.setIdentString(author);
-        }
-        gitAuthor.setName(nameFrom(author));
-        gitAuthor.setEmail(emailFrom(author));
-        return gitAuthor;
-    }
 
     private void addCommitForCommitter(final Map<String, GitCommitterDescriptor> committers, final String committer, final GitCommitDescriptor gitCommit) {
         if (committer == null) return;
