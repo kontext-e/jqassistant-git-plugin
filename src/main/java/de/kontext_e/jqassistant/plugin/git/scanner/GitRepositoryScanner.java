@@ -1,7 +1,6 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
-import com.buschmais.xo.api.Query.Result;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
@@ -26,7 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.buschmais.xo.api.Query.Result.*;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.getLatestScannedCommit;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.importExistingBranchesFromStore;
 
 class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
@@ -42,25 +42,25 @@ class GitRepositoryScanner {
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Map<String, GitCommitDescriptor> commits = new HashMap<>();
-    private final Map<String, GitBranchDescriptor> branches = new HashMap<>();
+    private final Map<String, GitBranchDescriptor> branches;
     private final List<GitCommit> gitCommits = new ArrayList<>();
 
     GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
         this.store = store;
         this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.range = range;
+
+        this.branches = importExistingBranchesFromStore(store);
     }
 
     void scanGitRepo() throws IOException {
-        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit();
+        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit(store);
         if (latestScannedCommit != null) {
             //Override range with last scanned Commit to avoid unnecessary scanning.
             range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
             LOGGER.debug("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
             //Add descriptor to cache to it can be used for parentOf-Relations
             commits.put(latestScannedCommit.getSha(), latestScannedCommit);
-            //Meaning that there is a commit already scanned, means we have to analyze the neo4j db for other existing nodes
-            importExistingGitData();
         }
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
@@ -68,8 +68,8 @@ class GitRepositoryScanner {
         gitCommits.addAll(jGitRepository.findCommits());
 
         storeCommits();
-        //TODO Avoid duplicate scanning
         addBranches(jGitRepository.findBranches());
+        //TODO Avoid duplicate scanning
         addTags(jGitRepository.findTags());
 
         authors.values().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
@@ -79,32 +79,6 @@ class GitRepositoryScanner {
         GitBranch head = jGitRepository.findHead();
         GitCommitDescriptor headDescriptor = commits.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
-    }
-
-    private void importExistingGitData() {
-        importExistingBranches();
-    }
-
-    private void importExistingBranches() {
-        String query = "Match (b:Branch) return b";
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
-            for (CompositeRowObject row : result) {
-                GitBranchDescriptor descriptor = row.get("b", GitBranchDescriptor.class);
-                branches.put(descriptor.getName(), descriptor);
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error while importing existing git branches", e);
-        }
-    }
-
-    private GitCommitDescriptor getLatestScannedCommit() {
-        String query = "MATCH (c:Commit) return c order by c.epoch desc limit 1";
-        try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
-            return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
-        } catch (Exception e) {
-            LOGGER.error("Error while looking for most recent scanned commit: "+ e);
-            return null;
-        }
     }
 
     private void storeCommits() {
