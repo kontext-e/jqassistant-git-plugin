@@ -42,6 +42,7 @@ class GitRepositoryScanner {
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Map<String, GitCommitDescriptor> commits = new HashMap<>();
+    private final Map<String, GitBranchDescriptor> branches = new HashMap<>();
     private final List<GitCommit> gitCommits = new ArrayList<>();
 
     GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
@@ -58,6 +59,8 @@ class GitRepositoryScanner {
             LOGGER.debug("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
             //Add descriptor to cache to it can be used for parentOf-Relations
             commits.put(latestScannedCommit.getSha(), latestScannedCommit);
+            //Meaning that there is a commit already scanned, means we have to analyze the neo4j db for other existing nodes
+            importExistingGitData();
         }
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
@@ -65,6 +68,7 @@ class GitRepositoryScanner {
         gitCommits.addAll(jGitRepository.findCommits());
 
         storeCommits();
+        //TODO Avoid duplicate scanning
         addBranches(jGitRepository.findBranches());
         addTags(jGitRepository.findTags());
 
@@ -77,11 +81,26 @@ class GitRepositoryScanner {
         gitRepositoryDescriptor.setHead(headDescriptor);
     }
 
+    private void importExistingGitData() {
+        importExistingBranches();
+    }
+
+    private void importExistingBranches() {
+        String query = "Match (b:Branch) return b";
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            for (CompositeRowObject row : result) {
+                GitBranchDescriptor descriptor = row.get("b", GitBranchDescriptor.class);
+                branches.put(descriptor.getName(), descriptor);
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while importing existing git branches", e);
+        }
+    }
+
     private GitCommitDescriptor getLatestScannedCommit() {
         String query = "MATCH (c:Commit) return c order by c.epoch desc limit 1";
         try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
-            GitCommitDescriptor descriptor = queryResult.iterator().next().get("c", GitCommitDescriptor.class);
-            return descriptor;
+            return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (Exception e) {
             LOGGER.error("Error while looking for most recent scanned commit: "+ e);
             return null;
@@ -145,19 +164,28 @@ class GitRepositoryScanner {
 
     private void addBranches(List<GitBranch> branches) {
         for (GitBranch gitBranch : branches) {
-            GitBranchDescriptor gitBranchDescriptor = store.create(GitBranchDescriptor.class);
-            String name = gitBranch.getName();
-            name = name.replaceFirst("refs/", "");
-            String sha = gitBranch.getCommitSha();
-            LOGGER.debug ("Adding new Branch '{}' with Head '{}'", name, sha);
-            gitBranchDescriptor.setName(name);
-            GitCommitDescriptor gitCommitDescriptor = commits.get(sha);
+            GitBranchDescriptor gitBranchDescriptor = findOrCreateGitBranchDescriptor(gitBranch);
+            GitCommitDescriptor gitCommitDescriptor = commits.get(gitBranch.getCommitSha());
             if (null == gitCommitDescriptor) {
-                LOGGER.warn ("Cannot retrieve commit '{}' for branch '{}'", sha, name);
+                LOGGER.warn ("Cannot retrieve commit '{}' for branch '{}'", gitBranch.getCommitSha(), gitBranchDescriptor.getName());
             }
             gitBranchDescriptor.setHead(gitCommitDescriptor);
-            gitRepositoryDescriptor.getBranches().add(gitBranchDescriptor);
+            if (!gitRepositoryDescriptor.getBranches().contains(gitBranchDescriptor)){
+                gitRepositoryDescriptor.getBranches().add(gitBranchDescriptor);
+            }
         }
+    }
+
+    private GitBranchDescriptor findOrCreateGitBranchDescriptor(GitBranch gitBranch) {
+        String name = gitBranch.getName().replaceFirst("refs/", "");
+        if (branches.containsKey(name)){
+            return branches.get(name);
+        }
+        GitBranchDescriptor gitBranchDescriptor = store.create(GitBranchDescriptor.class);
+        String sha = gitBranch.getCommitSha();
+        LOGGER.debug ("Adding new Branch '{}' with Head '{}'", name, sha);
+        gitBranchDescriptor.setName(name);
+        return gitBranchDescriptor;
     }
 
     private void addTags(List<GitTag> tags) {
