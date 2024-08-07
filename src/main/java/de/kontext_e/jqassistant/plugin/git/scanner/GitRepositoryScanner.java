@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.*;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.*;
 
 class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
