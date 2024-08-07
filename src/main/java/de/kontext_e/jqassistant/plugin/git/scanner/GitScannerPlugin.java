@@ -91,6 +91,7 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         if (existingRepositoryDescriptor != null){
             gitRepositoryDescriptor = existingRepositoryDescriptor;
         } else {
+            LOGGER.debug("No previously scanned repository was found, creating new node ...");
             gitRepositoryDescriptor = store.addDescriptorType(fileDescriptor, GitRepositoryDescriptor.class);
             initGitDescriptor(gitRepositoryDescriptor, item.getFile());
         }

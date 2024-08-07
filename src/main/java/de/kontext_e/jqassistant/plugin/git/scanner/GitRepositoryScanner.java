@@ -62,6 +62,7 @@ class GitRepositoryScanner {
             //Add descriptor to cache to it can be used for parentOf-Relations
             commits.put(latestScannedCommit.getSha(), latestScannedCommit);
         }
+        LOGGER.debug("No commit found - Repository was not yet scanned, doing scan according to specified range");
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
