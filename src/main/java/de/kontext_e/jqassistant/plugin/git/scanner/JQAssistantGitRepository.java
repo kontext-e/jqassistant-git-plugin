@@ -1,7 +1,8 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
-import com.buschmais.xo.api.Query;
+import com.buschmais.xo.api.Query.Result;
+import com.buschmais.xo.api.Query.Result.CompositeRowObject;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
@@ -18,9 +19,9 @@ public class JQAssistantDB {
 
     static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store) {
         String query = "Match (b:Branch) return b";
-        try (Query.Result<Query.Result.CompositeRowObject> result = store.executeQuery(query)){
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
             Map<String, GitBranchDescriptor> branches = new HashMap<>();
-            for (Query.Result.CompositeRowObject row : result) {
+            for (CompositeRowObject row : result) {
                 GitBranchDescriptor descriptor = row.get("b", GitBranchDescriptor.class);
                 branches.put(descriptor.getName(), descriptor);
             }
@@ -33,7 +34,7 @@ public class JQAssistantDB {
 
     static GitCommitDescriptor getLatestScannedCommit(Store store) {
         String query = "MATCH (c:Commit) return c order by c.epoch desc limit 1";
-        try (Query.Result<Query.Result.CompositeRowObject> queryResult = store.executeQuery(query)){
+        try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
             return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (Exception e) {
             LOGGER.error("Error while looking for most recent scanned commit: "+ e);
@@ -43,7 +44,7 @@ public class JQAssistantDB {
 
     static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
         String query = String.format("MATCH (c:Repository) where c.fileName = '%s' return c", absolutePath);
-        try (Query.Result<Query.Result.CompositeRowObject> result = store.executeQuery(query)){
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
             return result.iterator().next().get("c", GitRepositoryDescriptor.class);
         } catch (Exception e) {
             LOGGER.error("Error while looking for existing git repository: "+ e);
