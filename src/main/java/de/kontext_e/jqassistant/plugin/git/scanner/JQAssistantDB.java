@@ -4,6 +4,7 @@ import com.buschmais.jqassistant.core.store.api.Store;
 import com.buschmais.xo.api.Query;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,16 @@ public class JQAssistantDB {
             return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (Exception e) {
             LOGGER.error("Error while looking for most recent scanned commit: "+ e);
+            return null;
+        }
+    }
+
+    static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
+        String query = String.format("MATCH (c:Repository) where c.fileName = '%s' return c", absolutePath);
+        try (Query.Result<Query.Result.CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("c", GitRepositoryDescriptor.class);
+        } catch (Exception e) {
+            LOGGER.error("Error while looking for existing git repository: "+ e);
             return null;
         }
     }

@@ -18,6 +18,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantDB.getExistingRepositoryDescriptor;
+
 /**
  * @author jn4, Kontext E GmbH
  */
@@ -83,8 +85,15 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         LOGGER.debug ("Scanning Git directory '{}' (call with path: '{}')", item.getFile(), path);
         Store store = scanner.getContext().getStore();
 		FileDescriptor fileDescriptor = scanner.getContext().getCurrentDescriptor();
-		final GitRepositoryDescriptor gitRepositoryDescriptor = store.addDescriptorType(fileDescriptor, GitRepositoryDescriptor.class);
-        initGitDescriptor(gitRepositoryDescriptor, item.getFile());
+        GitRepositoryDescriptor existingRepositoryDescriptor = getExistingRepositoryDescriptor(store, item.getFile().getParent());
+
+        final GitRepositoryDescriptor gitRepositoryDescriptor;
+        if (existingRepositoryDescriptor != null){
+            gitRepositoryDescriptor = existingRepositoryDescriptor;
+        } else {
+            gitRepositoryDescriptor = store.addDescriptorType(fileDescriptor, GitRepositoryDescriptor.class);
+            initGitDescriptor(gitRepositoryDescriptor, item.getFile());
+        }
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range).scanGitRepo();
 
