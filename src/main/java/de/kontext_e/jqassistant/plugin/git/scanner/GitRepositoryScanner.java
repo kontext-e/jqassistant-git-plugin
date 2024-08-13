@@ -14,9 +14,8 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.*;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getLatestScannedCommit;
 
 public class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
@@ -49,28 +48,38 @@ public class GitRepositoryScanner {
         this.branchCache = new BranchCache(store);
 
         this.fileAnalyzer = new FileAnalyzer(fileCache);
-
     }
 
     void scanGitRepo() throws IOException {
-        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit(store);
-        if (latestScannedCommit != null) {
-            //Override range with last scanned Commit to avoid unnecessary scanning.
-            range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
-            LOGGER.info("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
-        }
-        LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
+        checkForExistingCommitsAndAdjustRangeAccordingly();
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
         storeCommits(jGitRepository.findCommits());
-        addBranches(jGitRepository.findBranches());
-        addTags(jGitRepository.findTags());
+        storeBranches(jGitRepository.findBranches());
+        storeTags(jGitRepository.findTags());
 
+        addAdditionalRelations();
+        adjustGitHead(jGitRepository);
+    }
+
+    private void checkForExistingCommitsAndAdjustRangeAccordingly() {
+        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit(store);
+        if (latestScannedCommit != null) {
+            //Override range with last scanned Commit to avoid unnecessary scanning.
+            range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
+            LOGGER.info("Found already scanned commit with sha: {} using it as range...", latestScannedCommit.getSha());
+        }
+        LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
+    }
+
+    private void addAdditionalRelations() {
         authorCache.getAuthors().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
         committerCache.getCommiters().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         fileCache.getFiles().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
+    }
 
+    private void adjustGitHead(JGitRepository jGitRepository) throws IOException {
         GitBranch head = jGitRepository.findHead();
         GitCommitDescriptor headDescriptor = commitCache.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
@@ -138,7 +147,7 @@ public class GitRepositoryScanner {
         }
     }
 
-    private void addBranches(List<GitBranch> branches) {
+    private void storeBranches(List<GitBranch> branches) {
         for (GitBranch gitBranch : branches) {
             GitBranchDescriptor gitBranchDescriptor = branchCache.findOrCreate(gitBranch);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitBranch.getCommitSha());
@@ -152,7 +161,7 @@ public class GitRepositoryScanner {
         }
     }
 
-    private void addTags(List<GitTag> tags) {
+    private void storeTags(List<GitTag> tags) {
         for (GitTag gitTag : tags) {
             GitTagDescriptor gitTagDescriptor = tagCache.findOrCreate(gitTag);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitTag.getCommitSha());
