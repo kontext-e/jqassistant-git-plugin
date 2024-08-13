@@ -37,7 +37,9 @@ public class AuthorCache {
             return authors.get(identString);
         } else {
             GitAuthorDescriptor authorDescriptor = getAuthorDescriptorFromDB(store, identString);
-            addToCache(authorDescriptor);
+            if (authorDescriptor != null) {
+                addToCache(authorDescriptor);
+            }
             return authorDescriptor;
         }
     }

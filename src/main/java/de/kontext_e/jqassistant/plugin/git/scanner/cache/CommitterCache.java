@@ -36,7 +36,9 @@ public class CommitterCache {
             return committers.get(identString);
         } else {
             GitCommitterDescriptor committerDescriptor = getCommitterDescriptorFromDB(store, identString);
-            addToCache(committerDescriptor);
+            if (committerDescriptor != null) {
+                addToCache(committerDescriptor);
+            }
             return committerDescriptor;
         }
     }
