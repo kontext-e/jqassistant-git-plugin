@@ -83,4 +83,13 @@ public class JQAssistantGitRepository {
         }
     }
 
+    public static GitCommitterDescriptor getCommitterDescriptorFromDB(Store store, String identString) {
+        String query = String.format("MATCH (c:Commiter) where c.identString = '%s' return c", identString);
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("c", GitCommitterDescriptor.class);
+        } catch (NoSuchElementException e){
+            return null;
+        }
+    }
+
 }
