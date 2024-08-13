@@ -29,7 +29,9 @@ public class CommitCache {
             return commits.get(sha);
         } else {
             GitCommitDescriptor commitDescriptor = getCommitDescriptorFromDB(store, sha);
-            addToCache(commitDescriptor);
+            if (commitDescriptor != null) {
+                addToCache(commitDescriptor);
+            }
             return commitDescriptor;
         }
     }
