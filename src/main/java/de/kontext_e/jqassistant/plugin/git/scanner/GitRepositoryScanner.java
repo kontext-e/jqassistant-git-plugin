@@ -28,11 +28,11 @@ import java.util.Map;
 
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.*;
 
-class GitRepositoryScanner {
+public class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
 
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    private static final DateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss Z");
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    public static final DateFormat TIME_FORMAT = new SimpleDateFormat("HH:mm:ss Z");
     private static final DateFormat DATE_TIME_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
     private final Store store;
@@ -91,36 +91,17 @@ class GitRepositoryScanner {
 
     private void storeCommitNodes(List<GitCommit> newCommits) {
         for (GitCommit gitCommit : newCommits) {
-            GitCommitDescriptor descriptor = createDescriptorForCommit(gitCommit);
-            addDescriptorToCache(descriptor);
+            GitCommitDescriptor descriptor = commitCache.createDescriptorForCommit(gitCommit);
 
-            gitRepositoryDescriptor.getCommits().add(descriptor);
-
+            addCommitForRepository(descriptor);
             addCommitForAuthor(gitCommit.getAuthor(), descriptor);
             addCommitForCommitter(committers, gitCommit.getCommitter(), descriptor);
             addCommitFiles(gitCommit, descriptor);
         }
     }
 
-    private GitCommitDescriptor createDescriptorForCommit(GitCommit gitCommit) {
-        GitCommitDescriptor gitCommitDescriptor = store.create(GitCommitDescriptor.class);
-        gitCommitDescriptor.setSha(gitCommit.getSha());
-        gitCommitDescriptor.setAuthor(gitCommit.getAuthor());
-        gitCommitDescriptor.setCommitter(gitCommit.getCommitter());
-        gitCommitDescriptor.setDate(DATE_FORMAT.format(gitCommit.getDate()));
-        gitCommitDescriptor.setMessage(gitCommit.getMessage());
-        gitCommitDescriptor.setShortMessage(gitCommit.getShortMessage());
-        gitCommitDescriptor.setEpoch(gitCommit.getDate().getTime());
-        gitCommitDescriptor.setTime(TIME_FORMAT.format(gitCommit.getDate()));
-        gitCommitDescriptor.setEncoding(gitCommit.getEncoding());
-
-        return gitCommitDescriptor;
-    }
-
-    private void addDescriptorToCache(GitCommitDescriptor gitCommitDescriptor) {
-        String sha = gitCommitDescriptor.getSha();
-        LOGGER.debug ("Adding new Commit '{}'", sha);
-        commitCache.addToCache(gitCommitDescriptor);
+    private void addCommitForRepository(GitCommitDescriptor descriptor) {
+        gitRepositoryDescriptor.getCommits().add(descriptor);
     }
 
     private void addParentRelationship(List<GitCommit> newCommits) {
