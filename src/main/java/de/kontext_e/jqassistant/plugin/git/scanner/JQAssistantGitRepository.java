@@ -92,4 +92,13 @@ public class JQAssistantGitRepository {
         }
     }
 
+    public static GitFileDescriptor getFileDescriptorFromDB(Store store, String relativePath) {
+        String query = String.format("MATCH (f:Git:File) where f.relativePath = '%s' return f", relativePath);
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("f", GitFileDescriptor.class);
+        } catch (NoSuchElementException e){
+            return null;
+        }
+    }
+
 }
