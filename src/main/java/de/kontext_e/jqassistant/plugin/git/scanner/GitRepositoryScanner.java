@@ -60,9 +60,9 @@ public class GitRepositoryScanner {
         if (latestScannedCommit != null) {
             //Override range with last scanned Commit to avoid unnecessary scanning.
             range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
-            LOGGER.debug("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
+            LOGGER.info("Found already scanned commit with sha: " + latestScannedCommit.getSha() + " using it as range...");
         }
-        LOGGER.debug("No commit found - Repository was not yet scanned, doing scan according to specified range");
+        LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 

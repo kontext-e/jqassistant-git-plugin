@@ -50,7 +50,7 @@ public class JQAssistantGitRepository {
         try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
             return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (Exception e) {
-            LOGGER.error("Error while looking for most recent scanned commit: "+ e);
+            LOGGER.debug("Error while looking for most recent scanned commit: "+ e);
             return null;
         }
     }
@@ -60,7 +60,7 @@ public class JQAssistantGitRepository {
         try (Result<CompositeRowObject> result = store.executeQuery(query)){
             return result.iterator().next().get("c", GitRepositoryDescriptor.class);
         } catch (Exception e) {
-            LOGGER.error("Error while looking for existing git repository: "+ e);
+            LOGGER.debug("Error while looking for existing git repository: "+ e);
             return null;
         }
     }
