@@ -46,7 +46,7 @@ public interface GitCommitDescriptor extends GitDescriptor {
     void setEncoding(String encoding);
 
     @Relation("CONTAINS_CHANGE")
-    List<GitChangeDescriptor> getFiles();
+    List<GitChangeDescriptor> getChanges();
 
     @Relation("HAS_PARENT")
     List<GitCommitDescriptor> getParents();
