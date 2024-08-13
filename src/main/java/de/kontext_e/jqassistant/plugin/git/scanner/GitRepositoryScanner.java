@@ -3,6 +3,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 import com.buschmais.jqassistant.core.store.api.Store;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.AuthorCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitCache;
+import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitterCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
@@ -39,8 +40,8 @@ public class GitRepositoryScanner {
     private final GitRepositoryDescriptor gitRepositoryDescriptor;
     private final CommitCache commitCache;
     private final AuthorCache authorCache;
+    private final CommitterCache committerCache;
     private String range;
-    private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Map<String, GitBranchDescriptor> branches;
     private final Map<String, GitTagDescriptor> tags;
@@ -52,6 +53,7 @@ public class GitRepositoryScanner {
 
         this.commitCache = new CommitCache(store);
         this.authorCache = new AuthorCache(store);
+        this.committerCache = new CommitterCache(store);
 
         this.branches = importExistingBranchesFromStore(store);
         this.tags = importExistingTagsFromStore(store);
@@ -75,8 +77,8 @@ public class GitRepositoryScanner {
         addTags(jGitRepository.findTags());
 
         authorCache.getAuthors().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
+        committerCache.getCommiters().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         //TODO Avoid duplicate scanning
-        committers.values().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         files.values().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
 
         GitBranch head = jGitRepository.findHead();
@@ -95,7 +97,7 @@ public class GitRepositoryScanner {
 
             addCommitForRepository(descriptor);
             addCommitForAuthor(gitCommit.getAuthor(), descriptor);
-            addCommitForCommitter(committers, gitCommit.getCommitter(), descriptor);
+            addCommitForCommitter(gitCommit.getCommitter(), descriptor);
             addCommitFiles(gitCommit, descriptor);
         }
     }
@@ -178,36 +180,11 @@ public class GitRepositoryScanner {
     }
 
 
-    private void addCommitForCommitter(final Map<String, GitCommitterDescriptor> committers, final String committer, final GitCommitDescriptor gitCommit) {
+    private void addCommitForCommitter(final String committer, final GitCommitDescriptor gitCommit) {
         if (committer == null) return;
 
-        if (!committers.containsKey(committer)) {
-            LOGGER.debug ("Adding new committer '{}'", committer);
-            GitCommitterDescriptor gitCommitter = findOrCreateGitCommitterDescriptor(committer);
-
-            gitCommitter.setName(nameFrom(committer));
-            gitCommitter.setEmail(emailFrom(committer));
-            committers.put(committer, gitCommitter);
-        }
-        committers.get(committer).getCommits().add(gitCommit);
-    }
-
-    private GitCommitterDescriptor findOrCreateGitCommitterDescriptor(String committer) {
-        GitCommitterDescriptor gitCommitter = store.find(GitCommitterDescriptor.class, committer);
-        if (gitCommitter == null) {
-            LOGGER.debug ("Committer '{}' does not exist, have to create a new entity", committer);
-            gitCommitter = store.create(GitCommitterDescriptor.class);
-            gitCommitter.setIdentString(committer);
-        }
-        return gitCommitter;
-    }
-
-    private String emailFrom(String author) {
-        return author.substring(author.indexOf("<")+1, author.indexOf(">")).trim();
-    }
-
-    private String nameFrom(String author) {
-        return author.substring(0, author.indexOf("<")).trim();
+        GitCommitterDescriptor committerDescriptor = committerCache.findOrCreate(committer);
+        committerDescriptor.getCommits().add(gitCommit);
     }
 
     private void addCommitFiles(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
