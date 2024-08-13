@@ -15,7 +15,7 @@ public class JQAssistantGitRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantGitRepository.class);
 
-    static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store) {
+    public static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store) {
         String query = "Match (b:Branch) return b";
         try (Result<CompositeRowObject> result = store.executeQuery(query)){
             Map<String, GitBranchDescriptor> branches = new HashMap<>();
@@ -30,7 +30,7 @@ public class JQAssistantGitRepository {
         return new HashMap<>();
     }
 
-    static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store) {
+    public static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store) {
         String query = "Match (t:Tag) return t";
         try (Result<CompositeRowObject> result = store.executeQuery(query)){
             Map<String, GitTagDescriptor> tags = new HashMap<>();

@@ -1,10 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import com.buschmais.jqassistant.core.store.api.Store;
-import de.kontext_e.jqassistant.plugin.git.scanner.cache.AuthorCache;
-import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitCache;
-import de.kontext_e.jqassistant.plugin.git.scanner.cache.CommitterCache;
-import de.kontext_e.jqassistant.plugin.git.scanner.cache.FileCache;
+import de.kontext_e.jqassistant.plugin.git.scanner.cache.*;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
@@ -35,9 +32,9 @@ public class GitRepositoryScanner {
     private final CommitterCache committerCache;
     private final FileAnalyzer fileAnalyzer;
     private final FileCache fileCache;
+    private final TagCache tagCache;
+    private final BranchCache branchCache;
     private String range;
-    private final Map<String, GitBranchDescriptor> branches;
-    private final Map<String, GitTagDescriptor> tags;
 
     GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
         this.store = store;
@@ -48,11 +45,11 @@ public class GitRepositoryScanner {
         this.authorCache = new AuthorCache(store);
         this.committerCache = new CommitterCache(store);
         this.fileCache = new FileCache(store);
+        this.tagCache = new TagCache(store);
+        this.branchCache = new BranchCache(store);
 
         this.fileAnalyzer = new FileAnalyzer(fileCache);
 
-        this.branches = importExistingBranchesFromStore(store);
-        this.tags = importExistingTagsFromStore(store);
     }
 
     void scanGitRepo() throws IOException {
@@ -66,9 +63,7 @@ public class GitRepositoryScanner {
 
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
 
-        List<GitCommit> newCommits = jGitRepository.findCommits();
-
-        storeCommits(newCommits);
+        storeCommits(jGitRepository.findCommits());
         addBranches(jGitRepository.findBranches());
         addTags(jGitRepository.findTags());
 
@@ -93,21 +88,38 @@ public class GitRepositoryScanner {
             addCommitForRepository(descriptor);
             addCommitForAuthor(gitCommit.getAuthor(), descriptor);
             addCommitForCommitter(gitCommit.getCommitter(), descriptor);
-            addCommitFiles(gitCommit, descriptor);
+
+            addCommitChanges(gitCommit, descriptor);
         }
     }
 
-    void addCommitFiles(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
+    private void addCommitForRepository(GitCommitDescriptor descriptor) {
+        gitRepositoryDescriptor.getCommits().add(descriptor);
+    }
+
+    private void addCommitForAuthor(final String author, final GitCommitDescriptor gitCommit) {
+        if (author == null) return;
+
+        GitAuthorDescriptor authorDescriptor = authorCache.findOrCreate(author);
+        authorDescriptor.getCommits().add(gitCommit);
+    }
+
+
+    private void addCommitForCommitter(final String committer, final GitCommitDescriptor gitCommit) {
+        if (committer == null) return;
+
+        GitCommitterDescriptor committerDescriptor = committerCache.findOrCreate(committer);
+        committerDescriptor.getCommits().add(gitCommit);
+    }
+
+
+    void addCommitChanges(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
         for (GitChange gitChange : gitCommit.getGitChanges()) {
             GitChangeDescriptor gitChangeDescriptor = store.create(GitChangeDescriptor.class);
             gitChangeDescriptor.setModificationKind(gitChange.getModificationKind());
             gitCommitDescriptor.getChanges().add(gitChangeDescriptor);
             fileAnalyzer.addAsGitFile(gitChange, gitChangeDescriptor, gitCommit.getDate());
         }
-    }
-
-    private void addCommitForRepository(GitCommitDescriptor descriptor) {
-        gitRepositoryDescriptor.getCommits().add(descriptor);
     }
 
     private void addParentRelationship(List<GitCommit> newCommits) {
@@ -128,7 +140,7 @@ public class GitRepositoryScanner {
 
     private void addBranches(List<GitBranch> branches) {
         for (GitBranch gitBranch : branches) {
-            GitBranchDescriptor gitBranchDescriptor = findOrCreateGitBranchDescriptor(gitBranch);
+            GitBranchDescriptor gitBranchDescriptor = branchCache.findOrCreate(gitBranch);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitBranch.getCommitSha());
             if (null == gitCommitDescriptor) {
                 LOGGER.warn ("Cannot retrieve commit '{}' for branch '{}'", gitBranch.getCommitSha(), gitBranchDescriptor.getName());
@@ -140,21 +152,9 @@ public class GitRepositoryScanner {
         }
     }
 
-    private GitBranchDescriptor findOrCreateGitBranchDescriptor(GitBranch gitBranch) {
-        String name = gitBranch.getName().replaceFirst("refs/", "");
-        if (branches.containsKey(name)){
-            return branches.get(name);
-        }
-        GitBranchDescriptor gitBranchDescriptor = store.create(GitBranchDescriptor.class);
-        String sha = gitBranch.getCommitSha();
-        LOGGER.debug ("Adding new Branch '{}' with Head '{}'", name, sha);
-        gitBranchDescriptor.setName(name);
-        return gitBranchDescriptor;
-    }
-
     private void addTags(List<GitTag> tags) {
         for (GitTag gitTag : tags) {
-            GitTagDescriptor gitTagDescriptor = findOrCreateTagDescriptor(gitTag);
+            GitTagDescriptor gitTagDescriptor = tagCache.findOrCreate(gitTag);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitTag.getCommitSha());
             if (null == gitCommitDescriptor) {
                 LOGGER.warn ("Cannot retrieve commit '{}' for tag '{}'", gitTag.getCommitSha(), gitTagDescriptor.getLabel());
@@ -162,33 +162,6 @@ public class GitRepositoryScanner {
             gitTagDescriptor.setCommit(gitCommitDescriptor);
             gitRepositoryDescriptor.getTags().add(gitTagDescriptor);
         }
-    }
-
-    private GitTagDescriptor findOrCreateTagDescriptor(GitTag gitTag){
-        String label = gitTag.getLabel().replaceFirst("refs/tags/", "");
-        if (tags.containsKey(label)){
-            return tags.get(label);
-        }
-        GitTagDescriptor gitTagDescriptor = store.create(GitTagDescriptor.class);
-        String sha = gitTag.getCommitSha();
-        LOGGER.debug ("Adding new Tag '{}' with Commit '{}'", label, sha);
-        gitTagDescriptor.setLabel(label);
-        return gitTagDescriptor;
-    }
-
-    private void addCommitForAuthor(final String author, final GitCommitDescriptor gitCommit) {
-        if (author == null) return;
-
-        GitAuthorDescriptor authorDescriptor = authorCache.findOrCreate(author);
-        authorDescriptor.getCommits().add(gitCommit);
-    }
-
-
-    private void addCommitForCommitter(final String committer, final GitCommitDescriptor gitCommit) {
-        if (committer == null) return;
-
-        GitCommitterDescriptor committerDescriptor = committerCache.findOrCreate(committer);
-        committerDescriptor.getCommits().add(gitCommit);
     }
 
 }
