@@ -186,10 +186,10 @@ class JGitRepository {
         Repository repository = getRepository();
 
         List<GitBranch> result = new LinkedList<>();
-        try (Git git = new Git(repository)) {
-            List<Ref> branches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
-            for (Ref branchRef : branches) {
-                GitBranch newBranch = new GitBranch (branchRef.getName(), ObjectId.toString(branchRef.getObjectId()));
+        try (Git jGit = new Git(repository)) {
+            List<Ref> jGitBranches = jGit.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+            for (Ref jBranchRef : jGitBranches) {
+                GitBranch newBranch = new GitBranch (jBranchRef.getName(), ObjectId.toString(jBranchRef.getObjectId()));
                 result.add (newBranch);
             }
         } catch (GitAPIException e) {
