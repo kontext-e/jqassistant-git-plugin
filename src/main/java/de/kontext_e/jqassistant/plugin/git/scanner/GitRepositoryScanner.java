@@ -53,7 +53,7 @@ public class GitRepositoryScanner {
     void scanGitRepo() throws IOException {
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName());
 
-        checkForExistingCommitsAndAdjustRangeAccordingly();
+        checkForExistingCommitsAndAdjustRangeAccordingly(jGitRepository);
 
         storeCommits(jGitRepository.findCommits(range));
         storeBranches(jGitRepository.findBranches());
@@ -63,16 +63,16 @@ public class GitRepositoryScanner {
         adjustGitHead(jGitRepository);
     }
 
-    private void checkForExistingCommitsAndAdjustRangeAccordingly() {
+    private void checkForExistingCommitsAndAdjustRangeAccordingly(JGitRepository jGitRepository) throws IOException {
         if (range == null) return;
 
-        String untilString = range.substring(range.lastIndexOf(".") + 1);
-        GitBranchDescriptor gitBranchDescriptor = branchCache.find(untilString);
+        String untilPartOfRange = range.substring(range.lastIndexOf(".") + 1);
+        GitBranchDescriptor gitBranchDescriptor = resolveSpecifiedBranch(jGitRepository, untilPartOfRange);
 
         if (gitBranchDescriptor != null) {
             String sha = findShaOfLatestScannedCommitOfBranch(store, gitBranchDescriptor.getName());
             if (sha != null) {
-                range = sha + ".." + untilString;
+                range = sha + ".." + untilPartOfRange;
                 LOGGER.info("Found already scanned commit with SHA: {} using it as range...", sha);
             } else {
                 LOGGER.warn("Could not find head of specified branch in database.");
@@ -82,6 +82,17 @@ public class GitRepositoryScanner {
         } else {
             LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
         }
+    }
+
+    private GitBranchDescriptor resolveSpecifiedBranch(JGitRepository jGitRepository, String untilString) throws IOException {
+        GitBranchDescriptor gitBranchDescriptor;
+        if (untilString.equalsIgnoreCase("HEAD")){
+            String head = jGitRepository.getCurrentlyCheckedOutBranch().replaceFirst("refs/", "");
+            gitBranchDescriptor = branchCache.find(head);
+        } else {
+            gitBranchDescriptor = branchCache.find(untilString);
+        }
+        return gitBranchDescriptor;
     }
 
     private void addAdditionalRelations() {

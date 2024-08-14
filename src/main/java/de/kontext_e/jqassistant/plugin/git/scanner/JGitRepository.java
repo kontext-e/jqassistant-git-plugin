@@ -184,6 +184,10 @@ class JGitRepository {
         return new GitBranch (Constants.HEAD, ObjectId.toString(head));
     }
 
+    String getCurrentlyCheckedOutBranch() throws IOException {
+        return repository.getFullBranch();
+    }
+
     List<GitBranch> findBranches() throws IOException {
         List<GitBranch> result = new LinkedList<>();
         try (git) {
