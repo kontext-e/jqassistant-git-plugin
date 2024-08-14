@@ -236,8 +236,4 @@ class JGitRepository {
 
         return result;
     }
-
-    public static void main(String[] args) throws IOException {
-        final List<GitCommit> commits = new JGitRepository(".git").findCommits(null);
-    }
 }
