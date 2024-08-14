@@ -15,7 +15,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getLatestScannedCommit;
+import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.findShaOfLatestScannedCommitOfBranch;
 
 public class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
@@ -51,11 +51,11 @@ public class GitRepositoryScanner {
     }
 
     void scanGitRepo() throws IOException {
+        JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName());
+
         checkForExistingCommitsAndAdjustRangeAccordingly();
 
-        JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName(), range);
-
-        storeCommits(jGitRepository.findCommits());
+        storeCommits(jGitRepository.findCommits(range));
         storeBranches(jGitRepository.findBranches());
         storeTags(jGitRepository.findTags());
 
@@ -64,13 +64,24 @@ public class GitRepositoryScanner {
     }
 
     private void checkForExistingCommitsAndAdjustRangeAccordingly() {
-        GitCommitDescriptor latestScannedCommit = getLatestScannedCommit(store);
-        if (latestScannedCommit != null) {
-            //Override range with last scanned Commit to avoid unnecessary scanning.
-            range = latestScannedCommit.getSha() + ".."; //TODO make behaviour configurable
-            LOGGER.info("Found already scanned commit with sha: {} using it as range...", latestScannedCommit.getSha());
+        if (range == null) return;
+
+        String untilString = range.substring(range.lastIndexOf(".") + 1);
+        GitBranchDescriptor gitBranchDescriptor = branchCache.find(untilString);
+
+        if (gitBranchDescriptor != null) {
+            String sha = findShaOfLatestScannedCommitOfBranch(store, gitBranchDescriptor.getName());
+            if (sha != null) {
+                range = sha + ".." + untilString;
+                LOGGER.info("Found already scanned commit with SHA: {} using it as range...", sha);
+            } else {
+                LOGGER.warn("Could not find head of specified branch in database.");
+                LOGGER.warn("Optimized scanning of commits thus not available, scan will do a full scan according to specified range.");
+                LOGGER.warn("Consider doing a full scan of the git repository or specify a range using commit SHAs that include the current head of the desired branch.");
+            }
+        } else {
+            LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
         }
-        LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
     }
 
     private void addAdditionalRelations() {

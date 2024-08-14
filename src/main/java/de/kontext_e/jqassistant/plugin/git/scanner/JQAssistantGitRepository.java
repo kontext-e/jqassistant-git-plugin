@@ -45,10 +45,10 @@ public class JQAssistantGitRepository {
         return new HashMap<>();
     }
 
-    static GitCommitDescriptor getLatestScannedCommit(Store store) {
-        String query = "MATCH (c:Commit) return c order by c.epoch desc limit 1";
-        try (Result<CompositeRowObject> queryResult = store.executeQuery(query)){
-            return queryResult.iterator().next().get("c", GitCommitDescriptor.class);
+    static String findShaOfLatestScannedCommitOfBranch(Store store, String branch) {
+        String query = String.format("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='%s' return n.sha", branch);
+        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+            return result.iterator().next().get("n.sha", String.class);
         } catch (Exception e) {
             LOGGER.debug("Error while looking for most recent scanned commit: "+ e);
             return null;

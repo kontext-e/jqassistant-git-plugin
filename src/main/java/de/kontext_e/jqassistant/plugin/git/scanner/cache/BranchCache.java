@@ -31,6 +31,18 @@ public class BranchCache {
         return createBranchDescriptor(gitBranch, name);
     }
 
+    public GitBranchDescriptor find(String name){
+        if (branches.containsKey(name)){
+            return branches.get(name);
+        }
+
+        if (branches.containsKey("heads/" + name)) {
+            return branches.get("heads/" + name);
+        }
+
+        return null;
+    }
+
     private GitBranchDescriptor createBranchDescriptor(GitBranch gitBranch, String name) {
         LOGGER.debug ("Adding new Branch '{}' with Head '{}'", name, gitBranch.getCommitSha());
         GitBranchDescriptor gitBranchDescriptor = store.create(GitBranchDescriptor.class);
