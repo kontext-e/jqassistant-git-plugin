@@ -49,48 +49,48 @@ class JGitRepository {
     private static final Logger logger = LoggerFactory.getLogger(JGitRepository.class);
 
     private final String path;
-    private final String range;
+    private final Repository repository;
     private final Map<String, GitCommit> commits = new HashMap<>();
+    private final Git git;
 
-    JGitRepository(final String path, String range) {
+    JGitRepository(final String path) throws IOException {
         this.path = path;
-        this.range = range;
+        this.repository = getRepository();
+        this.git = new Git(repository);
     }
 
-    static LogCommand getLogWithOrWithOutRange(Git git, String range) throws IOException {
+    public JGitRepository(Git git) {
+        this.git = git;
+        this.repository = git.getRepository();
+        this.path = repository.getDirectory().getAbsolutePath();
+    }
+
+    public LogCommand getLogWithOrWithOutRange(String range) throws IOException {
         LogCommand result = git.log();
 
-        if (null == range) {
-            result = result.all();
-        } else {
-            int firstDot = range.indexOf('.');
-            if (firstDot <= 0) {
-                throw new IllegalArgumentException ("Git range must start like '<rev specification>..'");
-            }
-            int lastDot = range.lastIndexOf(".");
-            if (lastDot - firstDot != 1) {
-                throw new IllegalArgumentException ("Git range specials ('three dot notation' etc.) are not supported!");
-            }
-            String sinceString = range.substring(0, firstDot);
-            String untilString = lastDot + 1 < range.length() ? range.substring(lastDot + 1) : "HEAD";
-            logger.debug ("Using range from '{}' to '{}'", sinceString, untilString);
-            AnyObjectId since = git.getRepository().resolve(sinceString);
-            if (null == since) {
-                throw new IllegalArgumentException("Could not retrieve 'since' Range part '" + sinceString + "'");
-            }
-            AnyObjectId until = git.getRepository().resolve(untilString);
-            if (null == until) {
-                throw new IllegalArgumentException("Could not retrieve 'until' Range part '" + untilString + "'");
-            }
-            result = result.addRange(since, until);
-        }
+        if (null == range) { return result.all(); }
 
+        int firstDot = range.indexOf('.');
+        if (firstDot <= 0) { throw new IllegalArgumentException ("Git range must start like '<rev specification>..'"); }
+
+        int lastDot = range.lastIndexOf(".");
+        if (lastDot - firstDot != 1) { throw new IllegalArgumentException ("Git range specials ('three dot notation' etc.) are not supported!"); }
+
+        String sinceString = range.substring(0, firstDot);
+        String untilString = lastDot + 1 < range.length() ? range.substring(lastDot + 1) : "HEAD";
+        logger.debug ("Using range from '{}' to '{}'", sinceString, untilString);
+
+        AnyObjectId since = git.getRepository().resolve(sinceString);
+        if (null == since) { throw new IllegalArgumentException("Could not retrieve 'since' Range part '" + sinceString + "'"); }
+
+        AnyObjectId until = git.getRepository().resolve(untilString);
+        if (null == until) { throw new IllegalArgumentException("Could not retrieve 'until' Range part '" + untilString + "'"); }
+
+        result = result.addRange(since, until);
         return result;
     }
 
-    List<GitCommit> findCommits() throws IOException {
-        Repository repository = getRepository();
-
+    List<GitCommit> findCommits(String range) throws IOException {
         List<GitCommit> result = new LinkedList<>();
 
         ObjectId head = repository.resolve("HEAD");
@@ -98,8 +98,10 @@ class JGitRepository {
 
         RevWalk rw = new RevWalk(repository);
 
-        try (Git git = new Git(repository)) {
-            LogCommand logCommand = getLogWithOrWithOutRange(git, range);
+        if (range != null && range.endsWith(".")) { range += "HEAD"; }
+
+        try (git) {
+            LogCommand logCommand = getLogWithOrWithOutRange(range);
             Iterable<RevCommit> commits = logCommand.call();
 
             DiffFormatter df = new DiffFormatter(DisabledOutputStream.INSTANCE);
@@ -178,24 +180,20 @@ class JGitRepository {
     }
 
     GitBranch findHead() throws IOException {
-        ObjectId head = getRepository().resolve(Constants.HEAD);
+        ObjectId head = repository.resolve(Constants.HEAD);
         return new GitBranch (Constants.HEAD, ObjectId.toString(head));
     }
 
     List<GitBranch> findBranches() throws IOException {
-        Repository repository = getRepository();
-
         List<GitBranch> result = new LinkedList<>();
-        try (Git jGit = new Git(repository)) {
-            List<Ref> jGitBranches = jGit.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+        try (git) {
+            List<Ref> jGitBranches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
             for (Ref jBranchRef : jGitBranches) {
                 GitBranch newBranch = new GitBranch (jBranchRef.getName(), ObjectId.toString(jBranchRef.getObjectId()));
                 result.add (newBranch);
             }
         } catch (GitAPIException e) {
             throw new IllegalStateException("Could not read branches from Git repository '" + path + "'", e);
-        } finally {
-            repository.close();
         }
 
         return result;
@@ -216,11 +214,9 @@ class JGitRepository {
     }
 
     List<GitTag> findTags() throws IOException {
-        Repository repository = getRepository();
-
         List<GitTag> result = new LinkedList<>();
 
-        try (Git git = new Git(repository)) {
+        try (git) {
             List<Ref> tags = git.tagList().call();
             for (Ref tagRef : tags) {
                 String label = tagRef.getName();
@@ -232,14 +228,12 @@ class JGitRepository {
             }
         } catch (GitAPIException e) {
             throw new IllegalStateException("Could not read tags from Git repository '" + path + "'", e);
-        } finally {
-            repository.close();
         }
 
         return result;
     }
 
     public static void main(String[] args) throws IOException {
-        final List<GitCommit> commits = new JGitRepository(".git", null).findCommits();
+        final List<GitCommit> commits = new JGitRepository(".git").findCommits(null);
     }
 }
