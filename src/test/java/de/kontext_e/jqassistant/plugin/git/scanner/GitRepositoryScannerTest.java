@@ -5,6 +5,7 @@ import com.buschmais.jqassistant.core.test.plugin.AbstractPluginIT;
 import com.buschmais.xo.api.Query;
 import com.buschmais.xo.api.ResultIterator;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
+import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
@@ -219,6 +220,62 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store, never()).create(GitCommitterDescriptor.class);
+    }
+
+    @Test
+    void testModificationChange() throws IOException {
+        store = spy(super.store);
+        GitChange change = new GitChange("M", "Old/Path", "Old/Path");
+        GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitChangeDescriptor.class);
+    }
+@Test
+    void testAddChange() throws IOException {
+        store = spy(super.store);
+        GitChange change = new GitChange("A", "Old/Path", "Old/Path");
+        GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitChangeDescriptor.class);
+    }
+@Test
+    void testDeleteChange() throws IOException {
+        store = spy(super.store);
+        GitChange change = new GitChange("D", "Old/Path", "Old/Path");
+        GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitChangeDescriptor.class);
+    }
+@Test
+    void testRenameChange() throws IOException {
+        store = spy(super.store);
+        GitChange change = new GitChange("R", "Old/Path", "Old/Path");
+        GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitChangeDescriptor.class);
+    }
+@Test
+    void testCopyChange() throws IOException {
+        store = spy(super.store);
+        GitChange change = new GitChange("C", "Old/Path", "Old/Path");
+        GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitChangeDescriptor.class);
     }
 
 }
