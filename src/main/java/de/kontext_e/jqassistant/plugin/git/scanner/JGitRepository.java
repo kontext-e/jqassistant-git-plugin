@@ -34,8 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A Scanner based on Eclipse JGit.
- *
- * Check out JGit documentation
+  * Check out JGit documentation
  * <ul>
  *     <li><a href="https://eclipse.org/jgit/">JGit project</a></li>
  *     <li><a href="https://github.com/centic9/jgit-cookbook">JGit cookbook</a></li>
