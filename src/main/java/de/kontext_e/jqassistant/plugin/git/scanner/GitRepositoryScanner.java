@@ -26,6 +26,7 @@ public class GitRepositoryScanner {
 
     private final Store store;
     private final GitRepositoryDescriptor gitRepositoryDescriptor;
+    private final JGitRepository jGitRepository;
     private final CommitCache commitCache;
     private final AuthorCache authorCache;
     private final CommitterCache committerCache;
@@ -35,10 +36,11 @@ public class GitRepositoryScanner {
     private final BranchCache branchCache;
     private String range;
 
-    GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range) {
+    GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range, JGitRepository jGitRepository) {
         this.store = store;
         this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.range = range;
+        this.jGitRepository = jGitRepository;
 
         this.commitCache = new CommitCache(store);
         this.authorCache = new AuthorCache(store);
@@ -51,19 +53,17 @@ public class GitRepositoryScanner {
     }
 
     void scanGitRepo() throws IOException {
-        JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName());
+        checkForExistingCommitsAndAdjustRangeAccordingly();
 
-        checkForExistingCommitsAndAdjustRangeAccordingly(jGitRepository);
-
-        storeCommits(jGitRepository.findCommits(range));
-        storeBranches(jGitRepository.findBranches());
-        storeTags(jGitRepository.findTags());
+        storeCommits();
+        storeBranches();
+        storeTags();
 
         addAdditionalRelations();
-        adjustGitHead(jGitRepository);
+        adjustGitHead();
     }
 
-    private void checkForExistingCommitsAndAdjustRangeAccordingly(JGitRepository jGitRepository) throws IOException {
+    private void checkForExistingCommitsAndAdjustRangeAccordingly() throws IOException {
         if (range == null) return;
 
         String untilPartOfRange = range.substring(range.lastIndexOf(".") + 1);
@@ -101,13 +101,14 @@ public class GitRepositoryScanner {
         fileCache.getFiles().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
     }
 
-    private void adjustGitHead(JGitRepository jGitRepository) throws IOException {
+    private void adjustGitHead() throws IOException {
         GitBranch head = jGitRepository.findHead();
         GitCommitDescriptor headDescriptor = commitCache.get(head.getCommitSha());
         gitRepositoryDescriptor.setHead(headDescriptor);
     }
 
-    private void storeCommits(List<GitCommit> newCommits) {
+    private void storeCommits() throws IOException {
+        List<GitCommit> newCommits = jGitRepository.findCommits(range);
         storeCommitNodes(newCommits);
         addParentRelationship(newCommits);
     }
@@ -135,14 +136,12 @@ public class GitRepositoryScanner {
         authorDescriptor.getCommits().add(gitCommit);
     }
 
-
     private void addCommitForCommitter(final String committer, final GitCommitDescriptor gitCommit) {
         if (committer == null) return;
 
         GitCommitterDescriptor committerDescriptor = committerCache.findOrCreate(committer);
         committerDescriptor.getCommits().add(gitCommit);
     }
-
 
     void addCommitChanges(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
         for (GitChange gitChange : gitCommit.getGitChanges()) {
@@ -169,8 +168,8 @@ public class GitRepositoryScanner {
         }
     }
 
-    private void storeBranches(List<GitBranch> branches) {
-        for (GitBranch gitBranch : branches) {
+    private void storeBranches() {
+        for (GitBranch gitBranch : jGitRepository.findBranches()) {
             GitBranchDescriptor gitBranchDescriptor = branchCache.findOrCreate(gitBranch);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitBranch.getCommitSha());
             if (null == gitCommitDescriptor) {
@@ -183,8 +182,8 @@ public class GitRepositoryScanner {
         }
     }
 
-    private void storeTags(List<GitTag> tags) {
-        for (GitTag gitTag : tags) {
+    private void storeTags() throws IOException {
+        for (GitTag gitTag : jGitRepository.findTags()) {
             GitTagDescriptor gitTagDescriptor = tagCache.findOrCreate(gitTag);
             GitCommitDescriptor gitCommitDescriptor = commitCache.get(gitTag.getCommitSha());
             if (null == gitCommitDescriptor) {

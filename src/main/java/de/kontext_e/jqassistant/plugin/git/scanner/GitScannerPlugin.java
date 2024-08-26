@@ -95,8 +95,9 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
             gitRepositoryDescriptor = store.addDescriptorType(fileDescriptor, GitRepositoryDescriptor.class);
             initGitDescriptor(gitRepositoryDescriptor, item.getFile());
         }
+        JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName());
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
 
         return gitRepositoryDescriptor;
     }
