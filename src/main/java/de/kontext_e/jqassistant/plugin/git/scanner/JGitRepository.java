@@ -188,7 +188,7 @@ class JGitRepository {
         return repository.getFullBranch();
     }
 
-    List<GitBranch> findBranches() throws IOException {
+    List<GitBranch> findBranches() {
         List<GitBranch> result = new LinkedList<>();
         try (git) {
             List<Ref> jGitBranches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
