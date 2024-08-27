@@ -80,7 +80,8 @@ public class GitRepositoryScanner {
                 LOGGER.warn("Consider doing a full scan of the git repository or specify a range using commit SHAs that include the current head of the desired branch.");
             }
         } else {
-            LOGGER.info("No commit found - Repository was not yet scanned, doing scan according to specified range");
+            LOGGER.info("Range either specifies two commits or a branch that does not exist in the current Database.");
+            LOGGER.info("Doing full scan according to specified range.");
         }
     }
 

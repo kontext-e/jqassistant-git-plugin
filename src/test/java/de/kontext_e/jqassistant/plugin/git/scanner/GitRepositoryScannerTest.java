@@ -14,8 +14,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
-import java.sql.Time;
-import java.time.LocalTime;
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -233,7 +231,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store).create(GitChangeDescriptor.class);
     }
-@Test
+
+    @Test
     void testAddChange() throws IOException {
         store = spy(super.store);
         GitChange change = new GitChange("A", "Old/Path", "Old/Path");
@@ -244,7 +243,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store).create(GitChangeDescriptor.class);
     }
-@Test
+
+    @Test
     void testDeleteChange() throws IOException {
         store = spy(super.store);
         GitChange change = new GitChange("D", "Old/Path", "Old/Path");
@@ -255,7 +255,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store).create(GitChangeDescriptor.class);
     }
-@Test
+
+    @Test
     void testRenameChange() throws IOException {
         store = spy(super.store);
         GitChange change = new GitChange("R", "Old/Path", "Old/Path");
@@ -266,7 +267,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store).create(GitChangeDescriptor.class);
     }
-@Test
+
+    @Test
     void testCopyChange() throws IOException {
         store = spy(super.store);
         GitChange change = new GitChange("C", "Old/Path", "Old/Path");
@@ -278,4 +280,87 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         verify(store).create(GitChangeDescriptor.class);
     }
 
+    @Test
+    void testNormalRange() throws IOException {
+        store = spy(super.store);
+        String range = "12345..67890";
+        GitCommit commit1 = CommitBuilder.builder().sha("12345").build();
+        GitCommit commit2 = CommitBuilder.builder().sha("34567").parents(List.of(commit1)).build();
+        GitCommit commit3 = CommitBuilder.builder().sha("67890").parents(List.of(commit2)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
+                .withCommits(commit1, commit2, commit3)
+                .build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        verify(store, times(3)).create(GitCommitDescriptor.class);
+    }
+
+    @Test
+    void testNormalRangeWithExistingCommits() throws IOException {
+        store = spy(super.store);
+        String range = "12345..67890";
+        GitCommitDescriptor commitDescriptor = store.create(GitCommitDescriptor.class);
+        commitDescriptor.setSha("12345");
+        GitCommit commit1 = CommitBuilder.builder().sha("12345").build();
+        GitCommit commit2 = CommitBuilder.builder().sha("34567").parents(List.of(commit1)).build();
+        GitCommit commit3 = CommitBuilder.builder().sha("67890").parents(List.of(commit2)).build();
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
+                .withCommits(commit1, commit2, commit3)
+                .build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        verify(store, times(4)).create(GitCommitDescriptor.class);
+    }
+
+    @Test
+    void testRangeWithExistingBranchName() throws IOException {
+        store = spy(super.store);
+        String range = "12345..main";
+        GitCommitDescriptor commitDescriptor = store.create(GitCommitDescriptor.class);
+        commitDescriptor.setSha("34567");
+        GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
+        branchDescriptor.setName("main");
+        branchDescriptor.setHead(commitDescriptor);
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(
+                CommitBuilder.builder().sha("67890").build()
+        ).build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        // times(2) because head commit of main is already created in test
+        verify(store, times(2)).create(GitCommitDescriptor.class);
+        verify(jGitRepository).findCommits("34567..main");
+    }
+
+    @Test
+    void testRangeWithNewBranchName() throws IOException {
+        store = spy(super.store);
+        String range = "12345..dev";
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
+                .withBranches(new GitBranch("dev", "12345"))
+                .withCommits(CommitBuilder.builder().sha("1234").build())
+                .build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        verify(store).create(GitCommitDescriptor.class);
+        verify(store).create(GitBranchDescriptor.class);
+    }
+
+    @Test
+    void testTranslateHeadIntoActualBranchName() throws IOException {
+        store = spy(super.store);
+        String range = "12345..HEAD";
+        GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
+        branchDescriptor.setName("branch");
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
+                .withCurrentlyCheckedOutBranch("refs/branch")
+                .build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='branch' return n.sha");
+    }
 }
