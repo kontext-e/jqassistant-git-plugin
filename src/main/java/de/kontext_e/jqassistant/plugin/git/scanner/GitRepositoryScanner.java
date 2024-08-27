@@ -96,7 +96,7 @@ public class GitRepositoryScanner {
 
     private void addAdditionalRelations() {
         authorCache.getAuthors().forEach(gitAuthor -> gitRepositoryDescriptor.getAuthors().add(gitAuthor));
-        committerCache.getCommiters().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
+        committerCache.getCommitters().forEach(gitCommitter -> gitRepositoryDescriptor.getCommitters().add(gitCommitter));
         fileCache.getFiles().forEach(gitFile -> gitRepositoryDescriptor.getFiles().add(gitFile));
     }
 

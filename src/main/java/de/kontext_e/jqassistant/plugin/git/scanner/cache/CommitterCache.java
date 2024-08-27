@@ -27,7 +27,7 @@ public class CommitterCache {
         return createCommitterDescriptor(identString);
     }
 
-    public List<GitCommitterDescriptor> getCommiters(){
+    public List<GitCommitterDescriptor> getCommitters(){
         return new LinkedList<>(committers.values());
     }
 
