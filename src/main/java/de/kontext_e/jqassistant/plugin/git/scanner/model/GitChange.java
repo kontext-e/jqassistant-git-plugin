@@ -27,10 +27,6 @@ public class GitChange {
         return relativePath;
     }
 
-    public String getChangeType() {
-        return changeType;
-    }
-
     public String getOldPath() {
         return oldPath;
     }

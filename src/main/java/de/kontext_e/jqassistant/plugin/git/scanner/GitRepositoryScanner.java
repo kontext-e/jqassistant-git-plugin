@@ -67,7 +67,7 @@ public class GitRepositoryScanner {
         if (range == null) return;
 
         String untilPartOfRange = range.substring(range.lastIndexOf(".") + 1);
-        GitBranchDescriptor gitBranchDescriptor = resolveSpecifiedBranch(jGitRepository, untilPartOfRange);
+        GitBranchDescriptor gitBranchDescriptor = resolveSpecifiedBranch(untilPartOfRange);
 
         if (gitBranchDescriptor != null) {
             String sha = findShaOfLatestScannedCommitOfBranch(store, gitBranchDescriptor.getName());
@@ -84,15 +84,13 @@ public class GitRepositoryScanner {
         }
     }
 
-    private GitBranchDescriptor resolveSpecifiedBranch(JGitRepository jGitRepository, String untilString) throws IOException {
-        GitBranchDescriptor gitBranchDescriptor;
+    private GitBranchDescriptor resolveSpecifiedBranch(String untilString) throws IOException {
         if (untilString.equalsIgnoreCase("HEAD")){
             String head = jGitRepository.getCurrentlyCheckedOutBranch().replaceFirst("refs/", "");
-            gitBranchDescriptor = branchCache.find(head);
+            return branchCache.find(head);
         } else {
-            gitBranchDescriptor = branchCache.find(untilString);
+            return branchCache.find(untilString);
         }
-        return gitBranchDescriptor;
     }
 
     private void addAdditionalRelations() {
