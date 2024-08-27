@@ -195,7 +195,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     }
 
     @Test
-    void testAddCommiter() throws IOException {
+    void testAddCommitter() throws IOException {
         Store store = spy(super.store);
         GitCommit gitCommit = CommitBuilder.builder().committer("Committer<Committer@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
@@ -203,7 +203,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store).create(GitCommitterDescriptor.class);
-        verify(store).executeQuery("MATCH (c:Commiter) where c.identString = 'Committer<Committer@e-mail.com>' return c");
+        verify(store).executeQuery("MATCH (c:Committer) where c.identString = 'Committer<Committer@e-mail.com>' return c");
         verify(gitRepositoryDescriptor).getCommits();
     }
 
