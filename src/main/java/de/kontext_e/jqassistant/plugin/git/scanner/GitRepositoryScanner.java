@@ -67,6 +67,11 @@ public class GitRepositoryScanner {
         if (range == null) return;
 
         String untilPartOfRange = range.substring(range.lastIndexOf(".") + 1);
+        if (range.endsWith(".")) {
+            range += "HEAD";
+            untilPartOfRange = "HEAD";
+        }
+
         GitBranchDescriptor gitBranchDescriptor = resolveSpecifiedBranch(untilPartOfRange);
 
         if (gitBranchDescriptor != null) {
