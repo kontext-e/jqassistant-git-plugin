@@ -361,6 +361,24 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
 
+        verify(jGitRepository).findCommits("12345..HEAD");
+        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='branch' return n.sha");
+    }
+
+    @Test
+    void testEmptyUntilRange() throws IOException {
+        store = spy(super.store);
+        String range = "12345..";
+
+        GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
+        branchDescriptor.setName("branch");
+        JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
+                .withCurrentlyCheckedOutBranch("refs/branch")
+                .build();
+
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+
+        verify(jGitRepository).findCommits("12345..HEAD");
         verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='branch' return n.sha");
     }
 }
