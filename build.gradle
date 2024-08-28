@@ -8,7 +8,7 @@ plugins{
 
 project.ext["jqaversion"] = "2.1.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.1.0'
+project.version = '2.2.0'
 
 repositories {
     maven {
@@ -45,6 +45,76 @@ java {
     }
 }
 
-jar {
-    archiveBaseName = 'jqassistant.plugin.git'
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'ke-jqassistant-plugins'
+                packaging = 'jar'
+                description = 'jQAssistant Git plugin sponsored by Kontext E'
+                url = 'https://github.com/kontext-e/jqassistant-git-plugin'
+
+                licenses {
+                    license {
+                        name = 'GNU General Public License, v3'
+                        url = 'http://www.gnu.org/licenses/gpl-3.0.html'
+                        distribution = 'repo'
+                    }
+                }
+
+                scm {
+                    url = 'scm:git@github.com/kontext-e/jqassistant-git-plugin'
+                    connection = 'scm:git@github.com/kontext-e/jqassistant-git-plugin'
+                    developerConnection = 'scm:git@github.com/kontext-e/jqassistant-git-plugin'
+                }
+
+                developers {
+                    developer {
+                        id = 'jens-nerche'
+                        name = 'Jens Nerche'
+                        email = 'j.nerche@kontext-e.de'
+                    }
+                    developer {
+                        id = 'gerd-aschemann'
+                        name = 'Gerd Aschemann'
+                        email = 'gerd@aschemann.net'
+                    }
+                    developer{
+                        id = 'william-thimm'
+                        name = 'William Thimm'
+                        email = 'w.thimm@kontext-e.de'
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            if (project.version.toUpperCase().contains("SNAPSHOT")){
+                url = "https://oss.sonatype.org/content/repositories/snapshots"
+            } else {
+                url = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            }
+            credentials{
+                username = sonatypeUsername
+                password = sonatypePassword
+            }
+        }
+        mavenLocal()
+    }
+}
+
+publish.dependsOn jar, sourcesJar, javadocJar
+
+signing {
+    //I assume this only works with gpg installed.
+    //On windows this comes packaged with Kleopatra
+    useGpgCmd()
+    sign publishing.publications.mavenJava
 }
