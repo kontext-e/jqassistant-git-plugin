@@ -9,6 +9,7 @@ import java.util.Map;
 
 import static de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner.DATE_FORMAT;
 import static de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner.TIME_FORMAT;
+import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getCommitDescriptorFromDB;
 
 public class CommitCache {
@@ -28,6 +29,7 @@ public class CommitCache {
         if (commits.containsKey(sha)) {
             return commits.get(sha);
         } else {
+            if (isFreshScan) return null;
             GitCommitDescriptor commitDescriptor = getCommitDescriptorFromDB(store, sha);
             if (commitDescriptor != null) {
                 addToCache(commitDescriptor);

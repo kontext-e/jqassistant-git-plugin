@@ -29,6 +29,7 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
     private static final String GIT_RANGE = "jqassistant.plugin.git.range";
     private static final Set<String> scannedPaths = new HashSet<>();
     private String range = null;
+    public static boolean isFreshScan = false;
 
 
     /*
@@ -92,6 +93,7 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
             gitRepositoryDescriptor = existingRepositoryDescriptor;
         } else {
             LOGGER.info("No previously scanned repository was found, creating new node ...");
+            isFreshScan = true;
             gitRepositoryDescriptor = store.addDescriptorType(fileDescriptor, GitRepositoryDescriptor.class);
             initGitDescriptor(gitRepositoryDescriptor, item.getFile());
         }
