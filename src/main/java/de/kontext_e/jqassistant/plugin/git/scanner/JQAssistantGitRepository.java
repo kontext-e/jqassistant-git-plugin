@@ -46,8 +46,8 @@ public class JQAssistantGitRepository {
     }
 
     static String findShaOfLatestScannedCommitOfBranch(Store store, String branch) {
-        String query = String.format("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='%s' return n.sha", branch);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("sha", branch))) {
             return result.iterator().next().get("n.sha", String.class);
         } catch (Exception e) {
             LOGGER.debug("Error while looking for most recent scanned commit: "+ e);
@@ -56,8 +56,8 @@ public class JQAssistantGitRepository {
     }
 
     static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
-        String query = String.format("MATCH (c:Repository) where c.fileName = '%s' return c", absolutePath);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (c:Repository) where c.fileName = $path return c";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", absolutePath))) {
             return result.iterator().next().get("c", GitRepositoryDescriptor.class);
         } catch (Exception e) {
             LOGGER.debug("Error while looking for existing git repository: "+ e);
@@ -66,8 +66,8 @@ public class JQAssistantGitRepository {
     }
 
     public static GitCommitDescriptor getCommitDescriptorFromDB(Store store, String sha) {
-        String query = String.format("MATCH (c:Commit) where c.sha = '%s' return c", sha);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (c:Commit) where c.sha = $sha return c";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("sha", sha))) {
             return result.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
@@ -75,8 +75,8 @@ public class JQAssistantGitRepository {
     }
 
     public static GitAuthorDescriptor getAuthorDescriptorFromDB(Store store, String identString) {
-        String query = String.format("MATCH (a:Author) where a.identString = '%s' return a", identString);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (a:Author) where a.identString = $ident return a";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("ident", identString))) {
             return result.iterator().next().get("a", GitAuthorDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
@@ -84,8 +84,8 @@ public class JQAssistantGitRepository {
     }
 
     public static GitCommitterDescriptor getCommitterDescriptorFromDB(Store store, String identString) {
-        String query = String.format("MATCH (c:Committer) where c.identString = '%s' return c", identString);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (c:Committer) where c.identString = $ident return c";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("ident", identString))) {
             return result.iterator().next().get("c", GitCommitterDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
@@ -93,8 +93,8 @@ public class JQAssistantGitRepository {
     }
 
     public static GitFileDescriptor getFileDescriptorFromDB(Store store, String relativePath) {
-        String query = String.format("MATCH (f:Git:File) where f.relativePath = '%s' return f", relativePath);
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+        String query = "MATCH (f:Git:File) where f.relativePath = $path return f";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", relativePath))) {
             return result.iterator().next().get("f", GitFileDescriptor.class);
         } catch (NoSuchElementException e){
             return null;

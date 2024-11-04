@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
@@ -57,8 +58,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store, times(2)).create(GitBranchDescriptor.class);
         verify(store).executeQuery("Match (b:Branch) return b");
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = '1234' return c");
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = '5678' return c");
+        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
+        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
 
     @Test
@@ -93,8 +94,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store, times(2)).create(GitTagDescriptor.class);
         verify(store).executeQuery("Match (t:Tag) return t");
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = '1234' return c");
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = '5678' return c");
+        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
+        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
 
     @Test
@@ -138,13 +139,14 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testAddAuthor() throws IOException {
         Store store = spy(super.store);
-        GitCommit gitCommit = CommitBuilder.builder().author("Author<Author@e-mail.com>").build();
+        //Also verify that apostrophes in the authors' name work
+        GitCommit gitCommit = CommitBuilder.builder().author("Au'thor<Au'thor@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store).create(GitAuthorDescriptor.class);
-        verify(store).executeQuery("MATCH (a:Author) where a.identString = 'Author<Author@e-mail.com>' return a");
+        verify(store).executeQuery("MATCH (a:Author) where a.identString = $ident return a", Map.of("ident", "Au'thor<Au'thor@e-mail.com>"));
         verify(gitRepositoryDescriptor).getAuthors();
     }
 
@@ -203,7 +205,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store).create(GitCommitterDescriptor.class);
-        verify(store).executeQuery("MATCH (c:Committer) where c.identString = 'Committer<Committer@e-mail.com>' return c");
+        verify(store).executeQuery("MATCH (c:Committer) where c.identString = $ident return c", Map.of("ident", "Committer<Committer@e-mail.com>"));
         verify(gitRepositoryDescriptor).getCommits();
     }
 
@@ -362,7 +364,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
-        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='branch' return n.sha");
+        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));
     }
 
     @Test
@@ -379,6 +381,6 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
-        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name='branch' return n.sha");
+        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));
     }
 }
