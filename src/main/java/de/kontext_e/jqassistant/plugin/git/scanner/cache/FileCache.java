@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getFileDescriptorFromDB;
 
 public class FileCache {
@@ -35,6 +36,7 @@ public class FileCache {
         if (files.containsKey(relativePath)) {
             return files.get(relativePath);
         } else {
+            if (isFreshScan) return null;
             GitFileDescriptor gitFileDescriptor = getFileDescriptorFromDB(store, relativePath);
             if (gitFileDescriptor != null) {
                 addToCache(gitFileDescriptor);

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getCommitterDescriptorFromDB;
 
 public class CommitterCache {
@@ -35,6 +36,7 @@ public class CommitterCache {
         if (committers.containsKey(identString)) {
             return committers.get(identString);
         } else {
+            if (isFreshScan) return null;
             GitCommitterDescriptor committerDescriptor = getCommitterDescriptorFromDB(store, identString);
             if (committerDescriptor != null) {
                 addToCache(committerDescriptor);

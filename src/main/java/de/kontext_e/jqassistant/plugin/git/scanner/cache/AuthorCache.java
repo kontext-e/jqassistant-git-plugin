@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getAuthorDescriptorFromDB;
 
 public class AuthorCache {
@@ -36,6 +37,7 @@ public class AuthorCache {
         if (authors.containsKey(identString)) {
             return authors.get(identString);
         } else {
+            if (isFreshScan) return null;
             GitAuthorDescriptor authorDescriptor = getAuthorDescriptorFromDB(store, identString);
             if (authorDescriptor != null) {
                 addToCache(authorDescriptor);
