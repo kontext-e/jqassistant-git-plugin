@@ -6,7 +6,7 @@ plugins{
     id 'maven-publish'
 }
 
-project.ext["jqaversion"] = "2.1.0"
+project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
 project.version = '2.2.2'
 
@@ -34,6 +34,15 @@ dependencies {
 
     testCompileOnly 'org.projectlombok:lombok:1.18.34'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+}
+
+tasks.named('processResources') {
+    filesMatching('**/*.properties') {
+        expand(project.properties)
+    }
+    filesMatching('**/*.xml') {
+        expand(project.properties)
+    }
 }
 
 java {
