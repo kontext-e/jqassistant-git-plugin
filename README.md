@@ -12,7 +12,7 @@ Use the jqassistant.yaml as described [here](https://jqassistant.github.io/jqass
 ```
     - group-id: de.kontext-e.jqassistant.plugin
       artifact-id: jqassistant.plugin.git
-      version: 2.1.0
+      version: 2.2.3
 ```
 
 ### Prior to jQAssistant 1.12
@@ -20,6 +20,9 @@ Use the jqassistant.yaml as described [here](https://jqassistant.github.io/jqass
 Download the desired version from maven (e.g. [here](https://mvnrepository.com/artifact/de.kontext-e.jqassistant.plugin/jqassistant.plugin.git)) and put the jar in the jqassistant plugins directory.
 
 ## Changelog
+
+- Version 2.2.3:
+  - Added version property to better work with jQA. Note that this requires jQAssistant 2.3.0 or above. There have been no other changes, so for compatibility reasons version 2.2.2 is still viable.
 
 - Version 2.2.:
   - If a repository has already been scanned and a range is given that ends in a branch name (or "head" or ends with ".."), the plugin will automatically find the most recent commit in the neo4J database and continue scanning from there. A starting range must still be given, but it will be overwritten.

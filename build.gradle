@@ -1,5 +1,5 @@
 plugins{
-    id 'de.kontext_e.jqassistant.gradle' version "2.0.0"
+    id 'de.kontext-e.jqassistant.gradle' version "3.0.0"
     id 'groovy'
     id 'java'
     id 'signing'
@@ -8,7 +8,7 @@ plugins{
 
 project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.2.2'
+project.version = '2.2.3'
 
 repositories {
     maven {
@@ -126,4 +126,9 @@ signing {
     //On windows this comes packaged with Kleopatra
     useGpgCmd()
     sign publishing.publications.mavenJava
+}
+
+jqassistant {
+    toolVersion '2.1.0'
+    neo4jVersion 4
 }
