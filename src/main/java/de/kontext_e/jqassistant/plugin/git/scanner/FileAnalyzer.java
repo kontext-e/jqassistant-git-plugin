@@ -33,18 +33,18 @@ public class FileAnalyzer {
         }
     }
 
-        gitFileDescriptor.updateCreationTime(date);
     private void addAsAddChange(GitAddChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
+        updateCreationTime(gitFileDescriptor, date);
         gitChangeDescriptor.setCreates(gitFileDescriptor);
     }
 
-        gitFileDescriptor.updateLastModificationTime(date);
     private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
+        updateLastModificationTime(gitFileDescriptor, date);
         gitChangeDescriptor.setUpdates(gitFileDescriptor);
     }
 
-        gitFileDescriptor.updateDeletionTime(date);
     private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
+        updateDeletionTime(gitFileDescriptor, date);
         gitChangeDescriptor.setDeletes(gitFileDescriptor);
     }
 
@@ -56,10 +56,10 @@ public class FileAnalyzer {
         gitChangeDescriptor.setRenames(oldFile);
 
         gitChangeDescriptor.setDeletes(oldFile);
-        oldFile.updateDeletionTime(date);
+        updateDeletionTime(oldFile, date);
 
         gitChangeDescriptor.setCreates(newFile);
-        newFile.updateCreationTime(date);
+        updateCreationTime(newFile, date);
     }
 
     private void addAsCopyChange(GitCopyChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
@@ -69,6 +69,30 @@ public class FileAnalyzer {
         newFile.setCopyOf(oldFile);
         gitChangeDescriptor.setCopies(oldFile);
         gitChangeDescriptor.setCreates(newFile);
-        newFile.updateCreationTime(date);
+        updateCreationTime(newFile, date);
+    }
+
+    private void updateDeletionTime(GitFileDescriptor descriptor, Date date) {
+        //Always take latest delete Change
+        if (descriptor.getDeletedAtEpoch() == null || date.getTime() < descriptor.getDeletedAtEpoch()) {
+            descriptor.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setDeletedAtEpoch(date.getTime());
+        }
+    }
+
+    private void updateCreationTime(GitFileDescriptor descriptor, Date date) {
+        //Always take earliest create change
+        if (descriptor.getCreatedAt() == null || date.getTime() > descriptor.getCreatedAtEpoch()) {
+            descriptor.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setCreatedAtEpoch(date.getTime());
+        }
+    }
+
+    private void updateLastModificationTime(GitFileDescriptor descriptor, Date date) {
+        //Always take latest update change
+        if (descriptor.getLastModificationAtEpoch() == null || date.getTime() < descriptor.getLastModificationAtEpoch()) {
+            descriptor.setLastModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setLastModificationAtEpoch(date.getTime());
+        }
     }
 }
