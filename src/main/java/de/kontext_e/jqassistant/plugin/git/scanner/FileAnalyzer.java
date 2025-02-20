@@ -28,9 +28,9 @@ public class FileAnalyzer {
         } else if (isDeleteChange(gitChangeDescriptor)) {
             addAsDeleteChange(gitChangeDescriptor, date, gitFileDescriptor);
         } else if (isRenameChange(gitChangeDescriptor)) {
-            addAsRenameChange(gitChange, gitChangeDescriptor);
+            addAsRenameChange(gitChangeDescriptor, date, gitChange);
         } else if (isCopyChange(gitChangeDescriptor)) {
-            addAsCopyChange(gitChange, gitChangeDescriptor);
+            addAsCopyChange(gitChangeDescriptor, date, gitChange);
         }
     }
 
@@ -39,8 +39,7 @@ public class FileAnalyzer {
     }
 
     private void addAsAddChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
-        gitFileDescriptor.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
-        gitFileDescriptor.setCreatedAtEpoch(date.getTime());
+        gitFileDescriptor.updateCreationTime(date);
         gitChangeDescriptor.setCreates(gitFileDescriptor);
     }
 
@@ -49,11 +48,8 @@ public class FileAnalyzer {
     }
 
     private void addAsUpdateChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
+        gitFileDescriptor.updateLastModificationTime(date);
         gitChangeDescriptor.setUpdates(gitFileDescriptor);
-        if (gitFileDescriptor.getLastModificationAtEpoch() == null || date.getTime() < gitFileDescriptor.getLastModificationAtEpoch()) {
-            gitFileDescriptor.setLastModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
-            gitFileDescriptor.setLastModificationAtEpoch(date.getTime());
-        }
     }
 
     boolean isDeleteChange(final GitChangeDescriptor gitChangeDescriptor) {
@@ -61,8 +57,7 @@ public class FileAnalyzer {
     }
 
     private void addAsDeleteChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
-        gitFileDescriptor.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
-        gitFileDescriptor.setDeletedAtEpoch(date.getTime());
+        gitFileDescriptor.updateDeletionTime(date);
         gitChangeDescriptor.setDeletes(gitFileDescriptor);
     }
 
@@ -70,24 +65,31 @@ public class FileAnalyzer {
         return "R".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
     }
 
-    private void addAsRenameChange(GitChange gitChange, GitChangeDescriptor gitChangeDescriptor) {
+    private void addAsRenameChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
         final GitFileDescriptor oldFile = fileCache.findOrCreate(gitChange.getOldPath());
         final GitFileDescriptor newFile = fileCache.findOrCreate(gitChange.getNewPath());
+
         oldFile.setHasNewName(newFile);
         gitChangeDescriptor.setRenames(oldFile);
+
         gitChangeDescriptor.setDeletes(oldFile);
+        oldFile.updateDeletionTime(date);
+
         gitChangeDescriptor.setCreates(newFile);
+        newFile.updateCreationTime(date);
     }
 
     boolean isCopyChange(final GitChangeDescriptor gitChangeDescriptor) {
         return "C".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
     }
 
-    private void addAsCopyChange(GitChange gitChange, GitChangeDescriptor gitChangeDescriptor) {
+    private void addAsCopyChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
         final GitFileDescriptor oldFile = fileCache.findOrCreate(gitChange.getOldPath());
         final GitFileDescriptor newFile = fileCache.findOrCreate(gitChange.getNewPath());
+
         newFile.setCopyOf(oldFile);
         gitChangeDescriptor.setCopies(oldFile);
         gitChangeDescriptor.setCreates(newFile);
+        newFile.updateCreationTime(date);
     }
 }
