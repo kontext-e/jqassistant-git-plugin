@@ -2,8 +2,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.FileCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitChangeDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
 
 
 import java.util.Date;
@@ -21,51 +20,35 @@ public class FileAnalyzer {
 
         gitChangeDescriptor.setModifies(gitFileDescriptor);
 
-        if (isAddChange(gitChangeDescriptor)) {
-            addAsAddChange(gitChangeDescriptor, date, gitFileDescriptor);
-        } else if (isUpdateChange(gitChangeDescriptor)) {
-            addAsUpdateChange(gitChangeDescriptor, date, gitFileDescriptor);
-        } else if (isDeleteChange(gitChangeDescriptor)) {
-            addAsDeleteChange(gitChangeDescriptor, date, gitFileDescriptor);
-        } else if (isRenameChange(gitChangeDescriptor)) {
-            addAsRenameChange(gitChangeDescriptor, date, gitChange);
-        } else if (isCopyChange(gitChangeDescriptor)) {
-            addAsCopyChange(gitChangeDescriptor, date, gitChange);
+        if (gitChangeDescriptor instanceof GitAddChangeDescriptor) {
+            addAsAddChange((GitAddChangeDescriptor) gitChangeDescriptor, date, gitFileDescriptor);
+        } else if (gitChangeDescriptor instanceof GitUpdateChangeDescriptor) {
+            addAsUpdateChange((GitUpdateChangeDescriptor) gitChangeDescriptor, date, gitFileDescriptor);
+        } else if (gitChangeDescriptor instanceof GitDeleteChangeDescriptor) {
+            addAsDeleteChange((GitDeleteChangeDescriptor) gitChangeDescriptor, date, gitFileDescriptor);
+        } else if (gitChangeDescriptor instanceof GitRenameChangeDescriptor) {
+            addAsRenameChange((GitRenameChangeDescriptor) gitChangeDescriptor, date, gitChange);
+        } else if (gitChangeDescriptor instanceof GitCopyChangeDescriptor) {
+            addAsCopyChange((GitCopyChangeDescriptor) gitChangeDescriptor, date, gitChange);
         }
     }
 
-    boolean isAddChange(final GitChangeDescriptor gitChangeDescriptor) {
-        return "A".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
-    }
-
-    private void addAsAddChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitFileDescriptor.updateCreationTime(date);
+    private void addAsAddChange(GitAddChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitChangeDescriptor.setCreates(gitFileDescriptor);
     }
 
-    boolean isUpdateChange(final GitChangeDescriptor gitChangeDescriptor) {
-        return "M".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
-    }
-
-    private void addAsUpdateChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitFileDescriptor.updateLastModificationTime(date);
+    private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitChangeDescriptor.setUpdates(gitFileDescriptor);
     }
 
-    boolean isDeleteChange(final GitChangeDescriptor gitChangeDescriptor) {
-        return "D".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
-    }
-
-    private void addAsDeleteChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitFileDescriptor.updateDeletionTime(date);
+    private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         gitChangeDescriptor.setDeletes(gitFileDescriptor);
     }
 
-    boolean isRenameChange(final GitChangeDescriptor gitChangeDescriptor) {
-        return "R".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
-    }
-
-    private void addAsRenameChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
+    private void addAsRenameChange(GitRenameChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
         final GitFileDescriptor oldFile = fileCache.findOrCreate(gitChange.getOldPath());
         final GitFileDescriptor newFile = fileCache.findOrCreate(gitChange.getNewPath());
 
@@ -79,11 +62,7 @@ public class FileAnalyzer {
         newFile.updateCreationTime(date);
     }
 
-    boolean isCopyChange(final GitChangeDescriptor gitChangeDescriptor) {
-        return "C".equalsIgnoreCase(gitChangeDescriptor.getModificationKind());
-    }
-
-    private void addAsCopyChange(GitChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
+    private void addAsCopyChange(GitCopyChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
         final GitFileDescriptor oldFile = fileCache.findOrCreate(gitChange.getOldPath());
         final GitFileDescriptor newFile = fileCache.findOrCreate(gitChange.getNewPath());
 

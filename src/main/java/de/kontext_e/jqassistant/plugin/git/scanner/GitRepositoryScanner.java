@@ -149,10 +149,21 @@ public class GitRepositoryScanner {
 
     void addCommitChanges(final GitCommit gitCommit, final GitCommitDescriptor gitCommitDescriptor) {
         for (GitChange gitChange : gitCommit.getGitChanges()) {
-            GitChangeDescriptor gitChangeDescriptor = store.create(GitChangeDescriptor.class);
+            GitChangeDescriptor gitChangeDescriptor = createGitChangeDescriptor(gitChange);
             gitChangeDescriptor.setModificationKind(gitChange.getModificationKind());
             gitCommitDescriptor.getChanges().add(gitChangeDescriptor);
             fileAnalyzer.addAsGitFile(gitChange, gitChangeDescriptor, gitCommit.getDate());
+        }
+    }
+
+    private GitChangeDescriptor createGitChangeDescriptor(GitChange gitChange) {
+        switch (gitChange.getModificationKind().toUpperCase()){
+            case "A": return store.create(GitAddChangeDescriptor.class);
+            case "M": return store.create(GitUpdateChangeDescriptor.class);
+            case "D": return store.create(GitDeleteChangeDescriptor.class);
+            case "R": return store.create(GitRenameChangeDescriptor.class);
+            case "C": return store.create(GitCopyChangeDescriptor.class);
+            default : return store.create(GitChangeDescriptor.class);
         }
     }
 
