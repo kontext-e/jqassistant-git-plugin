@@ -16,6 +16,11 @@
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitAuthorDescriptor</class>
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor</class>
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitTagDescriptor</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitAddChangeDescriptor</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitUpdateChangeDescriptor</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitDeleteChangeDescriptor</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRenameChangeDescriptor</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCopyChangeDescriptor</class>
     </model>
     <scanner>
         <class>de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin</class>

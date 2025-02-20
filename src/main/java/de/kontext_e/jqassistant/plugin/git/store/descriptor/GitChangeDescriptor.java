@@ -15,23 +15,4 @@ public interface GitChangeDescriptor extends GitDescriptor {
     GitFileDescriptor getModifies();
     void setModifies(GitFileDescriptor gitFileDescriptor);
 
-    @Relation("CREATES")
-    GitFileDescriptor getCreates();
-    void setCreates(GitFileDescriptor gitFileDescriptor);
-
-    @Relation("UPDATES")
-    GitFileDescriptor getUpdates();
-    void setUpdates(GitFileDescriptor gitFileDescriptor);
-
-    @Relation("DELETES")
-    GitFileDescriptor getDeletes();
-    void setDeletes(GitFileDescriptor gitFileDescriptor);
-
-    @Relation("RENAMES")
-    GitFileDescriptor getRenames();
-    void setRenames(GitFileDescriptor gitFileDescriptor);
-
-    @Relation("COPIES")
-    GitFileDescriptor getCopies();
-    void setCopies(GitFileDescriptor gitFileDescriptor);
 }
