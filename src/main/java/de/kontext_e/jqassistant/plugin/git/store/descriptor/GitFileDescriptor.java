@@ -3,10 +3,8 @@ package de.kontext_e.jqassistant.plugin.git.store.descriptor;
 import com.buschmais.xo.neo4j.api.annotation.Label;
 import com.buschmais.xo.neo4j.api.annotation.Property;
 import com.buschmais.xo.neo4j.api.annotation.Relation;
-import de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation;
-
-import java.util.Date;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitDeleteRelation;
 
 @Label("File")
 public interface GitFileDescriptor extends GitDescriptor {
@@ -50,5 +48,9 @@ public interface GitFileDescriptor extends GitDescriptor {
     @Relation.Incoming
     GitAddRelation getAdds();
     void setAdds(GitAddRelation adds);
+
+    @Relation.Incoming
+    GitDeleteRelation getDeletes();
+    void setDeletes(GitDeleteRelation deletes);
 
 }
