@@ -3,10 +3,10 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 import com.buschmais.jqassistant.core.store.api.Store;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.FileCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation;
-
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitDeleteRelation;
 
 import java.util.Date;
 
@@ -52,7 +52,9 @@ public class FileAnalyzer {
 
     private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateDeletionTime(gitFileDescriptor, date);
-        gitChangeDescriptor.setDeletes(gitFileDescriptor);
+        GitDeleteRelation deleteRelation = store.create(gitChangeDescriptor, GitDeleteRelation.class, gitFileDescriptor);
+        deleteRelation.setDeletedAtEpoch(date.getTime());
+        deleteRelation.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsRenameChange(GitRenameChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {

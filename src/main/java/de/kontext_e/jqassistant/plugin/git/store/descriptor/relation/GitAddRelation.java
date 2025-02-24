@@ -5,7 +5,6 @@ import com.buschmais.xo.neo4j.api.annotation.Property;
 import com.buschmais.xo.neo4j.api.annotation.Relation;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitAddChangeDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitChangeDescriptor;
 
 @Relation("CREATES")
 public interface GitAddRelation extends Descriptor {
