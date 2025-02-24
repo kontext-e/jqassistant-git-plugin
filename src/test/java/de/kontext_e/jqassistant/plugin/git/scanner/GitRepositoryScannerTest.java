@@ -9,13 +9,14 @@ import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
@@ -48,6 +49,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testScanNewBranches() throws IOException {
         Store store = spy(super.store);
+        when(store.executeQuery("Match (b:Branch) return b")).thenThrow(NoSuchElementException.class);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withBranches(
                     new GitBranch("master", "1234"),
@@ -85,6 +87,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testScanNewTags() throws IOException {
         Store store = spy(super.store);
+        when(store.executeQuery("Match (t:Tag) return t")).thenThrow(NoSuchElementException.class);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withTags(
                 new GitTag("master", "1234"),
                 new GitTag("develop", "5678")
@@ -140,6 +143,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     void testAddAuthor() throws IOException {
         Store store = spy(super.store);
         //Also verify that apostrophes in the authors' name work
+        when(store.executeQuery("MATCH (a:Author) where a.identString = $ident return a", Map.of("ident", "Au'thor<Au'thor@e-mail.com>"))).thenThrow(NoSuchElementException.class);
         GitCommit gitCommit = CommitBuilder.builder().author("Au'thor<Au'thor@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
@@ -199,6 +203,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testAddCommitter() throws IOException {
         Store store = spy(super.store);
+        when(store.executeQuery("MATCH (c:Committer) where c.identString = $ident return c", Map.of("ident", "Committer<Committer@e-mail.com>"))).thenThrow(NoSuchElementException.class);
         GitCommit gitCommit = CommitBuilder.builder().committer("Committer<Committer@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
@@ -231,7 +236,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
-        verify(store).create(GitChangeDescriptor.class);
+        verify(store).create(GitUpdateChangeDescriptor.class);
     }
 
     @Test
@@ -243,7 +248,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
-        verify(store).create(GitChangeDescriptor.class);
+        verify(store).create(GitAddChangeDescriptor.class);
     }
 
     @Test
@@ -255,7 +260,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
-        verify(store).create(GitChangeDescriptor.class);
+        verify(store).create(GitDeleteChangeDescriptor.class);
     }
 
     @Test
@@ -267,7 +272,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
-        verify(store).create(GitChangeDescriptor.class);
+        verify(store).create(GitRenameChangeDescriptor.class);
     }
 
     @Test
@@ -279,7 +284,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
-        verify(store).create(GitChangeDescriptor.class);
+        verify(store).create(GitCopyChangeDescriptor.class);
     }
 
     @Test
@@ -339,6 +344,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testRangeWithNewBranchName() throws IOException {
         store = spy(super.store);
+        when(store.executeQuery("Match (b:Branch) return b")).thenThrow(NoSuchElementException.class);
         String range = "12345..dev";
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withBranches(new GitBranch("dev", "12345"))
