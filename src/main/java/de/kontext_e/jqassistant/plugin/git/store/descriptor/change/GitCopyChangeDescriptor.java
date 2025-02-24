@@ -11,7 +11,4 @@ public interface GitCopyChangeDescriptor extends GitChangeDescriptor {
     GitFileDescriptor getCopies();
     void setCopies(GitFileDescriptor gitFileDescriptor);
 
-    @Relation("CREATES")
-    GitFileDescriptor getCreates();
-    void setCreates(GitFileDescriptor gitFileDescriptor);
 }

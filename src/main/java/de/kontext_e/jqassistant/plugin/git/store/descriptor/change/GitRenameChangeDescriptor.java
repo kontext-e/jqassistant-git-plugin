@@ -11,11 +11,4 @@ public interface GitRenameChangeDescriptor extends GitChangeDescriptor {
     GitFileDescriptor getRenames();
     void setRenames(GitFileDescriptor gitFileDescriptor);
 
-    @Relation("DELETES")
-    GitFileDescriptor getDeletes();
-    void setDeletes(GitFileDescriptor gitFileDescriptor);
-
-    @Relation("CREATES")
-    GitFileDescriptor getCreates();
-    void setCreates(GitFileDescriptor gitFileDescriptor);
 }
