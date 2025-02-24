@@ -4,14 +4,14 @@ import com.buschmais.jqassistant.core.store.api.model.Descriptor;
 import com.buschmais.xo.neo4j.api.annotation.Property;
 import com.buschmais.xo.neo4j.api.annotation.Relation;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
-import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitDeleteChangeDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitChangeDescriptor;
 
 @Relation("DELETES")
 public interface GitDeleteRelation extends Descriptor {
 
     @Relation.Outgoing
-    GitDeleteChangeDescriptor getDeletingChange();
-    void setDeletingChange(GitDeleteChangeDescriptor deletingChange);
+    GitChangeDescriptor getDeletingChange();
+    void setDeletingChange(GitChangeDescriptor deletingChange);
 
     @Relation.Incoming
     GitFileDescriptor getDeletedFile();
