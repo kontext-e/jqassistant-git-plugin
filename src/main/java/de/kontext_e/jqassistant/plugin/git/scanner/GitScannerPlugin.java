@@ -104,7 +104,7 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         return gitRepositoryDescriptor;
     }
 
-    static void initGitDescriptor(final GitRepositoryDescriptor gitRepositoryDescriptor, final File file) throws IOException {
+    static void initGitDescriptor(final GitRepositoryDescriptor gitRepositoryDescriptor, final File file) {
         final Path headPath = file.toPath().toAbsolutePath().normalize();
         LOGGER.debug ("Full path to Git directory HEAD is '{}'", headPath);
         final Path gitPath = headPath.getParent(); // Path of dir of /HEAD

@@ -67,10 +67,14 @@ public class FileAnalyzer {
         oldFile.setHasNewName(newFile);
         gitChangeDescriptor.setRenames(oldFile);
 
-        gitChangeDescriptor.setDeletes(oldFile);
+        GitDeleteRelation deleteRelation = store.create(gitChangeDescriptor, GitDeleteRelation.class, oldFile);
+        deleteRelation.setDeletedAtEpoch(date.getTime());
+        deleteRelation.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
         updateDeletionTime(oldFile, date);
 
-        gitChangeDescriptor.setCreates(newFile);
+        GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, newFile);
+        gitAddRelation.setCreatedAtEpoch(date.getTime());
+        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
         updateCreationTime(newFile, date);
     }
 
@@ -80,7 +84,10 @@ public class FileAnalyzer {
 
         newFile.setCopyOf(oldFile);
         gitChangeDescriptor.setCopies(oldFile);
-        gitChangeDescriptor.setCreates(newFile);
+
+        GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, newFile);
+        gitAddRelation.setCreatedAtEpoch(date.getTime());
+        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
         updateCreationTime(newFile, date);
     }
 
