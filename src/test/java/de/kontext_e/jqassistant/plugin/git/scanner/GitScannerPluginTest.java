@@ -5,7 +5,6 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.IOException;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -31,52 +30,36 @@ public class GitScannerPluginTest {
     @Test
     public void testGitScannerInitGitDescriptorDefault () {
         GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
-        try {
-            GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("/tmp/xxx/.git/HEAD"));
-            if (!IS_WINDOWS) {
-                verify(gitRepositoryDescriptor).setFileName("/tmp/xxx/.git");
-            }
-            verify(gitRepositoryDescriptor).setName("xxx");
-        } catch (IOException e) {
-            e.printStackTrace();
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("/tmp/xxx/.git/HEAD"));
+        if (!IS_WINDOWS) {
+            verify(gitRepositoryDescriptor).setFileName("/tmp/xxx/.git");
         }
+        verify(gitRepositoryDescriptor).setName("xxx");
     }
 
     @Test
     public void testGitScannerInitGitDescriptorMyOwnGit () {
         GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
-        try {
-            GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("../.git/HEAD"));
-            // Cannot do any verifications since the plugins project may be cloned under any name
-            // But check the debug output if you would like to make sure it works
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("../.git/HEAD"));
+        // Cannot do any verifications since the plugins project may be cloned under any name
+        // But check the debug output if you would like to make sure it works
     }
 
     @Test
     @Ignore
     public void testGitScannerInitGitDescriptorRelativeDotGit () {
         GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
-        try {
-            GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File(".git/HEAD"));
-            // Expected to be run in .../git/build
-            verify(gitRepositoryDescriptor).setName("git");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File(".git/HEAD"));
+        // Expected to be run in .../git/build
+        verify(gitRepositoryDescriptor).setName("git");
     }
 
     @Test
     @Ignore
     public void testGitScannerInitGitDescriptorRelativeDotDotGit () {
         GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
-        try {
-            GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("./.git/HEAD"));
-            // Expected to be run in .../git/build
-            verify(gitRepositoryDescriptor).setName("git");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("./.git/HEAD"));
+        // Expected to be run in .../git/build
+        verify(gitRepositoryDescriptor).setName("git");
     }
 }
