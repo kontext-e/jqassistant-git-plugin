@@ -7,6 +7,7 @@ import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

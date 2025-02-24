@@ -9,6 +9,7 @@ import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

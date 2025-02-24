@@ -3,6 +3,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.FileCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 
 
 import java.util.Date;
