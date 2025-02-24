@@ -4,6 +4,7 @@ import com.buschmais.xo.neo4j.api.annotation.Label;
 import com.buschmais.xo.neo4j.api.annotation.Property;
 import com.buschmais.xo.neo4j.api.annotation.Relation;
 import de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation;
 
 import java.util.Date;
 
@@ -45,4 +46,9 @@ public interface GitFileDescriptor extends GitDescriptor {
     @Relation("COPY_OF")
     GitFileDescriptor getCopyOf();
     void setCopyOf(GitFileDescriptor oldFile);
+
+    @Relation.Incoming
+    GitAddRelation getAdds();
+    void setAdds(GitAddRelation adds);
+
 }

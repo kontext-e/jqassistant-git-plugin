@@ -50,7 +50,7 @@ public class GitRepositoryScanner {
         this.tagCache = new TagCache(store);
         this.branchCache = new BranchCache(store);
 
-        this.fileAnalyzer = new FileAnalyzer(fileCache);
+        this.fileAnalyzer = new FileAnalyzer(fileCache, store);
     }
 
     void scanGitRepo() throws IOException {

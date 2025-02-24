@@ -1,9 +1,11 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
+import com.buschmais.jqassistant.core.store.api.Store;
 import de.kontext_e.jqassistant.plugin.git.scanner.cache.FileCache;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation;
 
 
 import java.util.Date;
@@ -11,9 +13,11 @@ import java.util.Date;
 public class FileAnalyzer {
 
     private final FileCache fileCache;
+    private final Store store;
 
-    public FileAnalyzer(FileCache fileCache) {
+    public FileAnalyzer(FileCache fileCache, Store store) {
         this.fileCache = fileCache;
+        this.store = store;
     }
 
     void addAsGitFile(GitChange gitChange, final GitChangeDescriptor gitChangeDescriptor, final Date date) {
@@ -36,7 +40,9 @@ public class FileAnalyzer {
 
     private void addAsAddChange(GitAddChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateCreationTime(gitFileDescriptor, date);
-        gitChangeDescriptor.setCreates(gitFileDescriptor);
+        GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, gitFileDescriptor);
+        gitAddRelation.setCreatedAtEpoch(date.getTime());
+        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
