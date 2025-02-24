@@ -23,6 +23,7 @@
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.change.GitCopyChangeDescriptor</class>
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation</class>
         <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitDeleteRelation</class>
+        <class>de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitUpdateRelation</class>
     </model>
     <scanner>
         <class>de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin</class>

@@ -7,6 +7,7 @@ import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitAddRelation;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitDeleteRelation;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitUpdateRelation;
 
 import java.util.Date;
 
@@ -47,7 +48,9 @@ public class FileAnalyzer {
 
     private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateLastModificationTime(gitFileDescriptor, date);
-        gitChangeDescriptor.setUpdates(gitFileDescriptor);
+        GitUpdateRelation updateChangeDescriptor = store.create(gitChangeDescriptor, GitUpdateRelation.class, gitFileDescriptor);
+        updateChangeDescriptor.setModificationAtEpoch(date.getTime());
+        updateChangeDescriptor.setModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
