@@ -93,7 +93,7 @@ public class FileAnalyzer {
 
     private void updateDeletionTime(GitFileDescriptor descriptor, Date date) {
         //Always take latest delete Change
-        if (descriptor.getDeletedAtEpoch() == null || date.getTime() < descriptor.getDeletedAtEpoch()) {
+        if (descriptor.getDeletedAtEpoch() == null || date.getTime() > descriptor.getDeletedAtEpoch()) {
             descriptor.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
             descriptor.setDeletedAtEpoch(date.getTime());
         }
@@ -101,7 +101,7 @@ public class FileAnalyzer {
 
     private void updateCreationTime(GitFileDescriptor descriptor, Date date) {
         //Always take earliest create change
-        if (descriptor.getCreatedAt() == null || date.getTime() > descriptor.getCreatedAtEpoch()) {
+        if (descriptor.getCreatedAt() == null || date.getTime() < descriptor.getCreatedAtEpoch()) {
             descriptor.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
             descriptor.setCreatedAtEpoch(date.getTime());
         }
@@ -109,7 +109,7 @@ public class FileAnalyzer {
 
     private void updateLastModificationTime(GitFileDescriptor descriptor, Date date) {
         //Always take latest update change
-        if (descriptor.getLastModificationAtEpoch() == null || date.getTime() < descriptor.getLastModificationAtEpoch()) {
+        if (descriptor.getLastModificationAtEpoch() == null || date.getTime() > descriptor.getLastModificationAtEpoch()) {
             descriptor.setLastModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
             descriptor.setLastModificationAtEpoch(date.getTime());
         }
