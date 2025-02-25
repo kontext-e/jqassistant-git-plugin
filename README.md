@@ -12,7 +12,7 @@ Use the jqassistant.yaml as described [here](https://jqassistant.github.io/jqass
 ```
     - group-id: de.kontext-e.jqassistant.plugin
       artifact-id: jqassistant.plugin.git
-      version: 2.2.3
+      version: 2.3.0
 ```
 
 ### Prior to jQAssistant 1.12
@@ -21,6 +21,12 @@ Download the desired version from maven (e.g. [here](https://mvnrepository.com/a
 
 ## Changelog
 
+- Version 2.3.0
+  - Added deletedAt property to renamed files
+  - Added time of deletion, modification, creation etc. to their respective relation
+  - Fixed bug where time of deletion/creation/modification would not make sense: when file is deleted multiple times, latest date is chosen; when it is created multiple times, earliest date is chosen 
+  - Added Labels `:Deletes`, `:Copy`, `:Rename`, `:Update` or `:Create` to Git Change Nodes.
+  
 - Version 2.2.3:
   - Added version property to better work with jQA. Note that this requires jQAssistant 2.3.0 or above. There have been no other changes, so for compatibility reasons version 2.2.2 is still viable.
 
