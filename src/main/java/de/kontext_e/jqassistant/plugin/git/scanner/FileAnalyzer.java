@@ -49,8 +49,8 @@ public class FileAnalyzer {
     private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateLastModificationTime(gitFileDescriptor, date);
         GitUpdateRelation updateChangeDescriptor = store.create(gitChangeDescriptor, GitUpdateRelation.class, gitFileDescriptor);
-        updateChangeDescriptor.setModificationAtEpoch(date.getTime());
-        updateChangeDescriptor.setModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        updateChangeDescriptor.setModifiedAtEpoch(date.getTime());
+        updateChangeDescriptor.setModifiedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
