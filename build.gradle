@@ -8,7 +8,7 @@ plugins{
 
 project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.2.3'
+project.version = '2.3.0-SNAPSHOT'
 
 repositories {
     maven {
@@ -43,6 +43,12 @@ tasks.named('processResources') {
     filesMatching('**/*.xml') {
         expand(project.properties)
     }
+}
+
+tasks.matching { task ->
+    task.group == 'publishing'
+}.configureEach { task ->
+    task.dependsOn ':clean'
 }
 
 java {
