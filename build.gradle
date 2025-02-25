@@ -8,7 +8,7 @@ plugins{
 
 project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.3.0-SNAPSHOT'
+project.version = '2.3.0'
 
 repositories {
     maven {
