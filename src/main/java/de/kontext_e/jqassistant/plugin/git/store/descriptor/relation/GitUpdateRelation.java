@@ -19,12 +19,12 @@ public interface GitUpdateRelation extends Descriptor {
 
 
     @Property("modifiedAt")
-    String getModificationAt();
-    void setModificationAt(String modificationAt);
+    String getModifiedAt();
+    void setModifiedAt(String modificationAt);
 
 
     @Property("modifiedAtEpoch")
-    Long getModificationAtEpoch();
-    void setModificationAtEpoch(Long modificationAtEpoch);
+    Long getModifiedAtEpoch();
+    void setModifiedAtEpoch(Long modificationAtEpoch);
 
 }
