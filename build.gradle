@@ -20,10 +20,11 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.buschmais.jqassistant.core:scanner:' + project.jqaversion
-    implementation 'com.buschmais.jqassistant.core:report:' + project.jqaversion
+    compileOnly 'com.buschmais.jqassistant.core:scanner:' + project.jqaversion
+    compileOnly 'com.buschmais.jqassistant.core:report:' + project.jqaversion
+    compileOnly 'com.buschmais.jqassistant.core:store:' + project.jqaversion
+
     implementation 'com.buschmais.jqassistant.plugin:common:' + project.jqaversion
-    implementation 'com.buschmais.jqassistant.core:store:' + project.jqaversion
     implementation 'org.eclipse.jgit:org.eclipse.jgit:6.9.0.202403050737-r'
 
     testImplementation 'com.buschmais.jqassistant.core:test:' + project.jqaversion
