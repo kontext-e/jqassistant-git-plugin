@@ -26,9 +26,12 @@ import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitReposito
 @ScannerPlugin.Requires(FileDescriptor.class)
 public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRepositoryDescriptor> {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitScannerPlugin.class);
-    private static final String GIT_RANGE = "jqassistant.plugin.git.range";
+    private static final String PLUGIN_PROPERTY_PREFIX = "jqassistant.plugin.git.";
+    private static final String GIT_RANGE = PLUGIN_PROPERTY_PREFIX + "range";
+    private static final String SCAN_SUBMODULES = PLUGIN_PROPERTY_PREFIX + "scan-submodules";
     private static final Set<String> scannedPaths = new HashSet<>();
     private String range = null;
+    private boolean scanSubmodules = false;
     public static boolean isFreshScan = false;
 
 
@@ -43,15 +46,37 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         try {
             final String pathToGitProject = item.getFile().toPath().getParent().toFile().getAbsolutePath();
 
-            if (!isGitDirectory(path, item)) return false;
-            if (isNestedGitRepo(pathToGitProject)) return false;
+            if (isGitDirectory(path, item)) {
+                if (isNestedGitRepo(pathToGitProject)) return false;
 
-            LOGGER.info("Accepted Git project in '{}'", pathToGitProject);
-            return true;
+                LOGGER.info("Accepted Git project in '{}'", pathToGitProject);
+                return true;
+            }
+
+            if (isSubmodule(path, item)) {
+                if (!scanSubmodules) return false;
+                if (isNestedGitRepo(pathToGitProject)) return false;
+
+                LOGGER.info("Accepted Git Submodule in '{}'", pathToGitProject);
+                return true;
+            }
+
+            return false;
         } catch (NullPointerException e) {
             return false;
         } catch (Exception e) {
             LOGGER.error("Error while checking path: {}", e, e);
+            return false;
+        }
+    }
+
+    private boolean isSubmodule(String path, FileResource item) {
+        if (!path.endsWith("/HEAD")) return false;
+
+        try {
+            final String absolutePath = item.getFile().toPath().toAbsolutePath().toString();
+            return absolutePath.contains("modules") && absolutePath.contains(".git");
+        } catch (IOException e) {
             return false;
         }
     }
@@ -134,6 +159,8 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
                 setRange(rangeProperty);
             }
         }
+
+         scanSubmodules = getBooleanProperty(SCAN_SUBMODULES, false);
     }
 
     private void setRange (String range) {
