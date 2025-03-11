@@ -15,12 +15,12 @@ public class JQAssistantGitRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantGitRepository.class);
 
-    public static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store) {
-        String query = "Match (b:Branch) return b";
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+    public static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
+        String query = "MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitBranchDescriptor> branches = new HashMap<>();
             for (CompositeRowObject row : result) {
-                GitBranchDescriptor descriptor = row.get("b", GitBranchDescriptor.class);
+                GitBranchDescriptor descriptor = row.get("branch", GitBranchDescriptor.class);
                 branches.put(descriptor.getName(), descriptor);
             }
             return branches;
