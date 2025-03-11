@@ -3,6 +3,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner.cache;
 import com.buschmais.jqassistant.core.store.api.Store;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitBranchDescriptor;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,9 @@ public class BranchCache {
     private final Map<String, GitBranchDescriptor> branches;
     private final Store store;
 
-    public BranchCache(Store store) {
+    public BranchCache(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
         this.store = store;
-        this.branches = importExistingBranchesFromStore(store);
+        this.branches = importExistingBranchesFromStore(store, gitRepositoryDescriptor);
     }
 
     public GitBranchDescriptor findOrCreate(GitBranch gitBranch) {
