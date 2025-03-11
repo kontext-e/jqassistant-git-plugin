@@ -2,6 +2,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner.cache;
 
 import com.buschmais.jqassistant.core.store.api.Store;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitTagDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +17,9 @@ public class TagCache {
     private final Map<String, GitTagDescriptor> tags;
     private final Store store;
 
-    public TagCache(Store store) {
+    public TagCache(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
         this.store = store;
-        this.tags = importExistingTagsFromStore(store);
+        this.tags = importExistingTagsFromStore(store, gitRepositoryDescriptor);
     }
 
     public GitTagDescriptor findOrCreate(GitTag gitTag){
