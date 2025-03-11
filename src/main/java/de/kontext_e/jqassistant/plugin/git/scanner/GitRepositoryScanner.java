@@ -47,7 +47,7 @@ public class GitRepositoryScanner {
         this.authorCache = new AuthorCache(store);
         this.committerCache = new CommitterCache(store);
         this.fileCache = new FileCache(store);
-        this.tagCache = new TagCache(store);
+        this.tagCache = new TagCache(store, gitRepositoryDescriptor);
         this.branchCache = new BranchCache(store, gitRepositoryDescriptor);
 
         this.fileAnalyzer = new FileAnalyzer(fileCache, store);

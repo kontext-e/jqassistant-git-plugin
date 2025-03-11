@@ -30,9 +30,9 @@ public class JQAssistantGitRepository {
         return new HashMap<>();
     }
 
-    public static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store) {
-        String query = "Match (t:Tag) return t";
-        try (Result<CompositeRowObject> result = store.executeQuery(query)){
+    public static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
+        String query = "MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t";
+        try (Result<CompositeRowObject> result = store.executeQuery(query,  Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitTagDescriptor> tags = new HashMap<>();
             for (CompositeRowObject row : result) {
                 GitTagDescriptor descriptor = row.get("t", GitTagDescriptor.class);
