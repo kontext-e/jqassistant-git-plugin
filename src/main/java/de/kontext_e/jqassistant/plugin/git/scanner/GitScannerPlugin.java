@@ -75,7 +75,10 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
 
         try {
             final String absolutePath = item.getFile().toPath().toAbsolutePath().toString();
-            return absolutePath.contains("modules") && absolutePath.contains(".git");
+            return absolutePath.contains("modules")
+                    && absolutePath.contains(".git")
+                    && !absolutePath.contains("log")
+                    && !absolutePath.contains("refs");
         } catch (IOException e) {
             return false;
         }
