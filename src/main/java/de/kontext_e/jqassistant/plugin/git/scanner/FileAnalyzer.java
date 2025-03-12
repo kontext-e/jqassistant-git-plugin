@@ -11,6 +11,8 @@ import de.kontext_e.jqassistant.plugin.git.store.descriptor.relation.GitUpdateRe
 
 import java.util.Date;
 
+import static de.kontext_e.jqassistant.plugin.git.scanner.utils.TimeAndDateFormats.DATE_TIME_FORMAT;
+
 public class FileAnalyzer {
 
     private final FileCache fileCache;
@@ -43,21 +45,21 @@ public class FileAnalyzer {
         updateCreationTime(gitFileDescriptor, date);
         GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, gitFileDescriptor);
         gitAddRelation.setCreatedAtEpoch(date.getTime());
-        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        gitAddRelation.setCreatedAt(DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsUpdateChange(GitUpdateChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateLastModificationTime(gitFileDescriptor, date);
         GitUpdateRelation updateChangeDescriptor = store.create(gitChangeDescriptor, GitUpdateRelation.class, gitFileDescriptor);
         updateChangeDescriptor.setModifiedAtEpoch(date.getTime());
-        updateChangeDescriptor.setModifiedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        updateChangeDescriptor.setModifiedAt(DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsDeleteChange(GitDeleteChangeDescriptor gitChangeDescriptor, Date date, GitFileDescriptor gitFileDescriptor) {
         updateDeletionTime(gitFileDescriptor, date);
         GitDeleteRelation deleteRelation = store.create(gitChangeDescriptor, GitDeleteRelation.class, gitFileDescriptor);
         deleteRelation.setDeletedAtEpoch(date.getTime());
-        deleteRelation.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        deleteRelation.setDeletedAt(DATE_TIME_FORMAT.format(date));
     }
 
     private void addAsRenameChange(GitRenameChangeDescriptor gitChangeDescriptor, Date date, GitChange gitChange) {
@@ -69,12 +71,12 @@ public class FileAnalyzer {
 
         GitDeleteRelation deleteRelation = store.create(gitChangeDescriptor, GitDeleteRelation.class, oldFile);
         deleteRelation.setDeletedAtEpoch(date.getTime());
-        deleteRelation.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        deleteRelation.setDeletedAt(DATE_TIME_FORMAT.format(date));
         updateDeletionTime(oldFile, date);
 
         GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, newFile);
         gitAddRelation.setCreatedAtEpoch(date.getTime());
-        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        gitAddRelation.setCreatedAt(DATE_TIME_FORMAT.format(date));
         updateCreationTime(newFile, date);
     }
 
@@ -87,14 +89,14 @@ public class FileAnalyzer {
 
         GitAddRelation gitAddRelation = store.create(gitChangeDescriptor, GitAddRelation.class, newFile);
         gitAddRelation.setCreatedAtEpoch(date.getTime());
-        gitAddRelation.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+        gitAddRelation.setCreatedAt(DATE_TIME_FORMAT.format(date));
         updateCreationTime(newFile, date);
     }
 
     private void updateDeletionTime(GitFileDescriptor descriptor, Date date) {
         //Always take latest delete Change
         if (descriptor.getDeletedAtEpoch() == null || date.getTime() > descriptor.getDeletedAtEpoch()) {
-            descriptor.setDeletedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setDeletedAt(DATE_TIME_FORMAT.format(date));
             descriptor.setDeletedAtEpoch(date.getTime());
         }
     }
@@ -102,7 +104,7 @@ public class FileAnalyzer {
     private void updateCreationTime(GitFileDescriptor descriptor, Date date) {
         //Always take earliest create change
         if (descriptor.getCreatedAt() == null || date.getTime() < descriptor.getCreatedAtEpoch()) {
-            descriptor.setCreatedAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setCreatedAt(DATE_TIME_FORMAT.format(date));
             descriptor.setCreatedAtEpoch(date.getTime());
         }
     }
@@ -110,7 +112,7 @@ public class FileAnalyzer {
     private void updateLastModificationTime(GitFileDescriptor descriptor, Date date) {
         //Always take latest update change
         if (descriptor.getLastModificationAtEpoch() == null || date.getTime() > descriptor.getLastModificationAtEpoch()) {
-            descriptor.setLastModificationAt(GitRepositoryScanner.DATE_TIME_FORMAT.format(date));
+            descriptor.setLastModificationAt(DATE_TIME_FORMAT.format(date));
             descriptor.setLastModificationAtEpoch(date.getTime());
         }
     }

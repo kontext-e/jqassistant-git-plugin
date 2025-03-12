@@ -7,10 +7,10 @@ import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner.DATE_FORMAT;
-import static de.kontext_e.jqassistant.plugin.git.scanner.GitRepositoryScanner.TIME_FORMAT;
 import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getCommitDescriptorFromDB;
+import static de.kontext_e.jqassistant.plugin.git.scanner.utils.TimeAndDateFormats.DATE_FORMAT;
+import static de.kontext_e.jqassistant.plugin.git.scanner.utils.TimeAndDateFormats.TIME_FORMAT;
 
 public class CommitCache {
 

@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getFileDescriptorFromDB;
 
 public class FileCache {
 
