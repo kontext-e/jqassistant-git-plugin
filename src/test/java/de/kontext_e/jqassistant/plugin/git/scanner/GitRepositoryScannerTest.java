@@ -24,16 +24,20 @@ import static org.mockito.Mockito.*;
 
 class GitRepositoryScannerTest extends AbstractPluginIT {
 
-    GitRepositoryDescriptor gitRepositoryDescriptor = mock();
+    GitRepositoryDescriptor gitRepositoryDescriptor;
 
     @BeforeEach
     public void beginTransaction() {
         store.beginTransaction();
-        when(gitRepositoryDescriptor.getFileName()).thenReturn(".git");
+        gitRepositoryDescriptor = spy(store.create(GitRepositoryDescriptor.class));
+        gitRepositoryDescriptor.setFileName(".git");
     }
 
     @AfterEach
     public void commitTransaction() {
+        store.commitTransaction();
+        store.beginTransaction();
+        store.executeQuery("Match (n) DETACH DELETE n").close();
         store.commitTransaction();
     }
 
@@ -60,7 +64,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store, times(2)).create(GitBranchDescriptor.class);
-        verify(store).executeQuery("Match (b:Branch) return b");
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
@@ -74,6 +78,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommitDescriptor headDescriptor = super.store.create(GitCommitDescriptor.class);
         headDescriptor.setSha("1234");
         gitRepositoryDescriptor.setHead(headDescriptor);
+        gitRepositoryDescriptor.getBranches().add(gitBranchDescriptor);
 
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withBranches(new GitBranch("master", "1234"))
@@ -82,7 +87,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store, never()).create(GitBranchDescriptor.class);
-        verify(store).executeQuery("Match (b:Branch) return b");
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
     }
 
     @Test
@@ -97,7 +102,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store, times(2)).create(GitTagDescriptor.class);
-        verify(store).executeQuery("Match (t:Tag) return t");
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
@@ -119,7 +124,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
 
         verify(store, never()).create(GitBranchDescriptor.class);
-        verify(store).executeQuery("Match (t:Tag) return t");
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
     }
 
     @Test
@@ -331,6 +336,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
         branchDescriptor.setName("main");
         branchDescriptor.setHead(commitDescriptor);
+        gitRepositoryDescriptor.getBranches().add(branchDescriptor);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(
                 CommitBuilder.builder().sha("67890").build()
         ).build();
@@ -364,6 +370,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         String range = "12345..HEAD";
         GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
         branchDescriptor.setName("branch");
+        gitRepositoryDescriptor.getBranches().add(branchDescriptor);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withCurrentlyCheckedOutBranch("refs/branch")
                 .build();
@@ -381,6 +388,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         GitBranchDescriptor branchDescriptor = store.create(GitBranchDescriptor.class);
         branchDescriptor.setName("branch");
+        gitRepositoryDescriptor.getBranches().add(branchDescriptor);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withCurrentlyCheckedOutBranch("refs/branch")
                 .build();
