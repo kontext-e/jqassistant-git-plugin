@@ -7,7 +7,6 @@ import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitDescriptor;
 import java.util.HashMap;
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.GitScannerPlugin.isFreshScan;
 import static de.kontext_e.jqassistant.plugin.git.scanner.repositories.JQAssistantGitRepository.getCommitDescriptorFromDB;
 import static de.kontext_e.jqassistant.plugin.git.scanner.utils.TimeAndDateFormats.DATE_FORMAT;
 import static de.kontext_e.jqassistant.plugin.git.scanner.utils.TimeAndDateFormats.TIME_FORMAT;
@@ -16,9 +15,11 @@ public class CommitCache {
 
     private final Map<String, GitCommitDescriptor> commits = new HashMap<>();
     private final Store store;
+    private final boolean isFreshScan;
 
-    public CommitCache(final Store store) {
+    public CommitCache(final Store store, boolean isFreshScan) {
         this.store = store;
+        this.isFreshScan = isFreshScan;
     }
 
     public void addToCache(final GitCommitDescriptor commit) {

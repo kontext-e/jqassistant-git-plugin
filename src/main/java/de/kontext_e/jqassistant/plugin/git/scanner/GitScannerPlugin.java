@@ -33,7 +33,6 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
     private static final Set<String> scannedPaths = new HashSet<>();
     private String range = null;
     private boolean scanSubmodules = false;
-    public static boolean isFreshScan = false;
 
 
     /*
@@ -116,10 +115,12 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         Store store = scanner.getContext().getStore();
 		FileDescriptor fileDescriptor = scanner.getContext().getCurrentDescriptor();
         GitRepositoryDescriptor existingRepositoryDescriptor = getExistingRepositoryDescriptor(store, item.getFile().getParent());
+        boolean isFreshScan;
 
         final GitRepositoryDescriptor gitRepositoryDescriptor;
         if (existingRepositoryDescriptor != null){
             gitRepositoryDescriptor = existingRepositoryDescriptor;
+            isFreshScan = false;
         } else {
             LOGGER.info("No previously scanned repository was found, creating new node ...");
             isFreshScan = true;
@@ -128,7 +129,7 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         }
         JGitRepository jGitRepository = new JGitRepository(gitRepositoryDescriptor.getFileName());
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, isFreshScan).scanGitRepo();
 
         return gitRepositoryDescriptor;
     }
