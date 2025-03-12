@@ -14,9 +14,11 @@ public class CommitterCache {
 
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Store store;
+    private final boolean isFreshScan;
 
-    public CommitterCache(final Store store) {
+    public CommitterCache(final Store store, boolean isFreshScan) {
         this.store = store;
+        this.isFreshScan = isFreshScan;
     }
 
     public GitCommitterDescriptor findOrCreate(final String identString) {

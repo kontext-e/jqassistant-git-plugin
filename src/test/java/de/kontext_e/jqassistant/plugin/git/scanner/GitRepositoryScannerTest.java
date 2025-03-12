@@ -47,7 +47,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         Store store = spy(super.store);
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(any());
     }
@@ -62,7 +62,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                     new GitBranch("develop", "5678"))
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, times(2)).create(GitBranchDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
@@ -85,7 +85,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withBranches(new GitBranch("master", "1234"))
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(GitBranchDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
@@ -100,7 +100,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 new GitTag("develop", "5678")
         ).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, times(2)).create(GitTagDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
@@ -122,7 +122,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withTags(new GitTag("master", "1234"))
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(GitBranchDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
@@ -140,7 +140,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitCommitDescriptor.class);
         verify(gitRepositoryDescriptor).getCommits();
@@ -154,7 +154,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit gitCommit = CommitBuilder.builder().author("Au'thor<Au'thor@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitAuthorDescriptor.class);
         verify(store).executeQuery("MATCH (a:Author) where a.identString = $ident return a", Map.of("ident", "Au'thor<Au'thor@e-mail.com>"));
@@ -169,7 +169,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit gitCommit = CommitBuilder.builder().author("Author<Author@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(GitAuthorDescriptor.class);
     }
@@ -181,7 +181,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit childCommit = CommitBuilder.builder().sha("5678").parents(List.of(parentCommit)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(parentCommit, childCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, times(2)).create(GitCommitDescriptor.class);
         ResultIterator<Query.Result.CompositeRowObject> iterator = store.executeQuery("Match (c:Git:Commit)-[r:HAS_PARENT]->(p:Git:Commit) return r").iterator();
@@ -199,7 +199,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit childCommit = CommitBuilder.builder().sha("5678").parents(List.of(parentCommit)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(childCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         // times(2) because method is called during test-setup
         verify(store, times(2)).create(GitCommitDescriptor.class);
@@ -214,7 +214,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit gitCommit = CommitBuilder.builder().committer("Committer<Committer@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitCommitterDescriptor.class);
         verify(store).executeQuery("MATCH (c:Committer) where c.identString = $ident return c", Map.of("ident", "Committer<Committer@e-mail.com>"));
@@ -229,7 +229,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit gitCommit = CommitBuilder.builder().author("Committer<Committer@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(GitCommitterDescriptor.class);
     }
@@ -241,7 +241,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitUpdateChangeDescriptor.class);
     }
@@ -253,7 +253,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitAddChangeDescriptor.class);
     }
@@ -265,7 +265,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitDeleteChangeDescriptor.class);
     }
@@ -277,7 +277,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitRenameChangeDescriptor.class);
     }
@@ -289,7 +289,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit commit = CommitBuilder.builder().gitChanges(List.of(change)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(commit).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitCopyChangeDescriptor.class);
     }
@@ -305,7 +305,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withCommits(commit1, commit2, commit3)
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(store, times(3)).create(GitCommitDescriptor.class);
     }
@@ -323,7 +323,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withCommits(commit1, commit2, commit3)
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(store, times(4)).create(GitCommitDescriptor.class);
     }
@@ -342,7 +342,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 CommitBuilder.builder().sha("67890").build()
         ).build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         // times(2) because head commit of main is already created in test
         verify(store, times(2)).create(GitCommitDescriptor.class);
@@ -359,7 +359,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withCommits(CommitBuilder.builder().sha("1234").build())
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitCommitDescriptor.class);
         verify(store).create(GitBranchDescriptor.class);
@@ -376,7 +376,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withCurrentlyCheckedOutBranch("refs/branch")
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
         verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));
@@ -394,7 +394,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
                 .withCurrentlyCheckedOutBranch("refs/branch")
                 .build();
 
-        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository).scanGitRepo();
+        new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
         verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));

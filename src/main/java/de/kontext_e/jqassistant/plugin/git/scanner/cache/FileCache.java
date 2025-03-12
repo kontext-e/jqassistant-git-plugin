@@ -14,9 +14,11 @@ public class FileCache {
 
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Store store;
+    private final boolean isFreshScan;
 
-    public FileCache(Store store) {
+    public FileCache(Store store, boolean isFreshScan) {
         this.store = store;
+        this.isFreshScan = isFreshScan;
     }
 
     public List<GitFileDescriptor> getFiles() {

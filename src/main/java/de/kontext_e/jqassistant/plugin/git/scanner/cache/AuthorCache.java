@@ -15,9 +15,11 @@ public class AuthorCache {
 
     private final Map<String, GitAuthorDescriptor> authors = new HashMap<>();
     private final Store store;
+    private final boolean isFreshScan;
 
-    public AuthorCache(final Store store) {
+    public AuthorCache(final Store store, boolean isFreshScan) {
         this.store = store;
+        this.isFreshScan = isFreshScan;
     }
 
     public List<GitAuthorDescriptor> getAuthors() {

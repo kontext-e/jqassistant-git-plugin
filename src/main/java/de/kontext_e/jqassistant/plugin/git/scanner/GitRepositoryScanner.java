@@ -34,16 +34,16 @@ public class GitRepositoryScanner {
     private final BranchCache branchCache;
     private String range;
 
-    GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range, JGitRepository jGitRepository) {
+    GitRepositoryScanner(final Store store, final GitRepositoryDescriptor gitRepositoryDescriptor, final String range, JGitRepository jGitRepository, boolean isFreshScan) {
         this.store = store;
         this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.range = range;
         this.jGitRepository = jGitRepository;
 
-        this.commitCache = new CommitCache(store);
-        this.authorCache = new AuthorCache(store);
-        this.committerCache = new CommitterCache(store);
-        this.fileCache = new FileCache(store);
+        this.commitCache = new CommitCache(store, isFreshScan);
+        this.authorCache = new AuthorCache(store, isFreshScan);
+        this.committerCache = new CommitterCache(store, isFreshScan);
+        this.fileCache = new FileCache(store, isFreshScan);
         this.tagCache = new TagCache(store, gitRepositoryDescriptor);
         this.branchCache = new BranchCache(store, gitRepositoryDescriptor);
 
