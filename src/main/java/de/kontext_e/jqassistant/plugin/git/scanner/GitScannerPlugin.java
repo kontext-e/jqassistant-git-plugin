@@ -7,6 +7,7 @@ import com.buschmais.jqassistant.core.store.api.Store;
 import com.buschmais.jqassistant.plugin.common.api.model.FileDescriptor;
 import com.buschmais.jqassistant.plugin.common.api.scanner.AbstractScannerPlugin;
 import com.buschmais.jqassistant.plugin.common.api.scanner.filesystem.FileResource;
+import de.kontext_e.jqassistant.plugin.git.scanner.repositories.JGitRepository;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.getExistingRepositoryDescriptor;
+import static de.kontext_e.jqassistant.plugin.git.scanner.repositories.JQAssistantGitRepository.getExistingRepositoryDescriptor;
 
 /**
  * @author jn4, Kontext E GmbH

@@ -3,6 +3,7 @@ package de.kontext_e.jqassistant.plugin.git.scanner;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
+import de.kontext_e.jqassistant.plugin.git.scanner.repositories.JGitRepository;
 
 import java.io.IOException;
 import java.util.LinkedList;

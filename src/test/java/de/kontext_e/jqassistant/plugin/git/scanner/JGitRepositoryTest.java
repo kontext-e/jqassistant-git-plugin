@@ -1,11 +1,8 @@
 package de.kontext_e.jqassistant.plugin.git.scanner;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
+import de.kontext_e.jqassistant.plugin.git.scanner.repositories.JGitRepository;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.lib.ObjectId;
@@ -13,10 +10,12 @@ import org.eclipse.jgit.lib.Repository;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * A Scanner based on Eclipse JGit.

@@ -1,4 +1,4 @@
-package de.kontext_e.jqassistant.plugin.git.scanner;
+package de.kontext_e.jqassistant.plugin.git.scanner.repositories;
 
 import com.buschmais.jqassistant.core.store.api.Store;
 import com.buschmais.xo.api.Query.Result;
@@ -45,7 +45,7 @@ public class JQAssistantGitRepository {
         return new HashMap<>();
     }
 
-    static String findShaOfLatestScannedCommitOfBranch(Store store, String branch) {
+    public static String findShaOfLatestScannedCommitOfBranch(Store store, String branch) {
         String query = "MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha";
         try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("sha", branch))) {
             return result.iterator().next().get("n.sha", String.class);
@@ -55,7 +55,7 @@ public class JQAssistantGitRepository {
         }
     }
 
-    static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
+    public static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
         String query = "MATCH (c:Repository) where c.fileName = $path return c";
         try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", absolutePath))) {
             return result.iterator().next().get("c", GitRepositoryDescriptor.class);
