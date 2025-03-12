@@ -22,7 +22,7 @@ Download the desired version from maven (e.g. [here](https://mvnrepository.com/a
 ## Changelog
 
 - Version 2.4.0
-  - Added Support for submodule scanning 
+  - Added Support for submodule scanning  (including new Concept `git:LinkSubmodules`)
   - Added indexing to GitFileDescriptor's relativePath property
   - Minor Improvements
 - Version 2.3.0

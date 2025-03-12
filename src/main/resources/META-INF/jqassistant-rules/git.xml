@@ -38,4 +38,29 @@
         ]]></cypher>
     </concept>
 
+    <concept id="git:LinkSubmodules">
+        <description>Creates a relation "HAS_SUBMODULE between main repository and all submodules and labels them as such"</description>
+        <cypher><![CDATA[
+            MATCH
+                (main:Git:Repository)
+            OPTIONAL MATCH
+                (sub:Git:Repository)
+            WHERE
+                sub.fileName CONTAINS main.fileName
+            AND
+                sub <> main
+            WITH
+                main, sub
+            WHERE
+                sub IS NOT NULL
+            SET
+                sub:Submodule, main:Main
+            MERGE
+                (main)-[:HAS_SUBMODULE]->(sub)
+            RETURN
+                count(sub)
+        ]]></cypher>
+
+    </concept>
+
 </jqassistant-rules>
