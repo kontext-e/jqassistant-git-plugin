@@ -8,7 +8,7 @@ plugins{
 
 project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.3.0'
+project.version = '2.4.0'
 
 repositories {
     maven {
@@ -136,6 +136,6 @@ signing {
 }
 
 jqassistant {
-    toolVersion '2.1.0'
+    toolVersion '2.5.0'
     neo4jVersion 4
 }

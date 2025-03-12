@@ -12,7 +12,7 @@ Use the jqassistant.yaml as described [here](https://jqassistant.github.io/jqass
 ```
     - group-id: de.kontext-e.jqassistant.plugin
       artifact-id: jqassistant.plugin.git
-      version: 2.3.0
+      version: 2.4.0
 ```
 
 ### Prior to jQAssistant 1.12
@@ -21,6 +21,10 @@ Download the desired version from maven (e.g. [here](https://mvnrepository.com/a
 
 ## Changelog
 
+- Version 2.4.0
+  - Added Support for submodule scanning 
+  - Added indexing to GitFileDescriptor's relativePath property
+  - Minor Improvements
 - Version 2.3.0
   - Added deletedAt property to renamed files
   - Added time of deletion, modification, creation etc. to their respective relation
