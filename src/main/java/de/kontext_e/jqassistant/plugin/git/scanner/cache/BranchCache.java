@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.importExistingBranchesFromStore;
+import static de.kontext_e.jqassistant.plugin.git.scanner.repositories.JQAssistantGitRepository.importExistingBranchesFromStore;
 
 public class BranchCache {
 

@@ -1,12 +1,4 @@
-package de.kontext_e.jqassistant.plugin.git.scanner;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+package de.kontext_e.jqassistant.plugin.git.scanner.repositories;
 
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
@@ -19,18 +11,17 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.diff.RawTextComparator;
-import org.eclipse.jgit.lib.AnyObjectId;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.PersonIdent;
-import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.util.io.DisabledOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * A Scanner based on Eclipse JGit.
@@ -43,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author Gerd Aschemann - gerd@aschemann.net - @GerdAschemann
  * @since 1.1.0
  */
-class JGitRepository {
+public class JGitRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(JGitRepository.class);
 
@@ -52,7 +43,7 @@ class JGitRepository {
     private final Map<String, GitCommit> commits = new HashMap<>();
     private final Git git;
 
-    JGitRepository(final String path) throws IOException {
+    public JGitRepository(final String path) throws IOException {
         this.path = path;
         this.repository = getRepository();
         this.git = new Git(repository);
@@ -89,7 +80,7 @@ class JGitRepository {
         return result;
     }
 
-    List<GitCommit> findCommits(String range) throws IOException {
+    public List<GitCommit> findCommits(String range) throws IOException {
         List<GitCommit> result = new LinkedList<>();
 
         ObjectId head = repository.resolve("HEAD");
@@ -178,16 +169,16 @@ class JGitRepository {
         return repository;
     }
 
-    GitBranch findHead() throws IOException {
+    public GitBranch findHead() throws IOException {
         ObjectId head = repository.resolve(Constants.HEAD);
         return new GitBranch (Constants.HEAD, ObjectId.toString(head));
     }
 
-    String getCurrentlyCheckedOutBranch() throws IOException {
+    public String getCurrentlyCheckedOutBranch() throws IOException {
         return repository.getFullBranch();
     }
 
-    List<GitBranch> findBranches() {
+    public List<GitBranch> findBranches() {
         List<GitBranch> result = new LinkedList<>();
         try (git) {
             List<Ref> jGitBranches = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
@@ -216,7 +207,7 @@ class JGitRepository {
         return logs.iterator().next();
     }
 
-    List<GitTag> findTags() throws IOException {
+    public List<GitTag> findTags() throws IOException {
         List<GitTag> result = new LinkedList<>();
 
         try (git) {

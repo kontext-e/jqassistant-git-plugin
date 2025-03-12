@@ -6,17 +6,16 @@ import de.kontext_e.jqassistant.plugin.git.scanner.model.GitBranch;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitChange;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitCommit;
 import de.kontext_e.jqassistant.plugin.git.scanner.model.GitTag;
+import de.kontext_e.jqassistant.plugin.git.scanner.repositories.JGitRepository;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.*;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.change.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
-import static de.kontext_e.jqassistant.plugin.git.scanner.JQAssistantGitRepository.findShaOfLatestScannedCommitOfBranch;
+import static de.kontext_e.jqassistant.plugin.git.scanner.repositories.JQAssistantGitRepository.findShaOfLatestScannedCommitOfBranch;
 
 public class GitRepositoryScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(GitRepositoryScanner.class);
