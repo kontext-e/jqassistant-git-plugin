@@ -38,6 +38,26 @@ public class GitScannerPluginTest {
     }
 
     @Test
+    public void testGitScannerInitGitDescriptorSubmodule () {
+        GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("/tmp/main/.git/modules/my-sub/HEAD"));
+        if (!IS_WINDOWS) {
+            verify(gitRepositoryDescriptor).setFileName("/tmp/main/.git/modules/my-sub");
+        }
+        verify(gitRepositoryDescriptor).setName("my-sub");
+    }
+
+    @Test
+    public void testGitScannerInitGitDescriptorWorktree () {
+        GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
+        GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("/tmp/main/.git/worktrees/feature/HEAD"));
+        if (!IS_WINDOWS) {
+            verify(gitRepositoryDescriptor).setFileName("/tmp/main/.git/worktrees/feature");
+        }
+        verify(gitRepositoryDescriptor).setName("feature");
+    }
+
+    @Test
     public void testGitScannerInitGitDescriptorMyOwnGit () {
         GitRepositoryDescriptor gitRepositoryDescriptor = mock(GitRepositoryDescriptor.class);
         GitScannerPlugin.initGitDescriptor(gitRepositoryDescriptor, new File("../.git/HEAD"));

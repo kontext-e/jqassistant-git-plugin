@@ -140,12 +140,9 @@ public class GitScannerPlugin extends AbstractScannerPlugin<FileResource, GitRep
         final Path gitPath = headPath.getParent(); // Path of dir of /HEAD
         final String pathToGitProject = gitPath.toFile().getAbsolutePath();
         LOGGER.debug ("Full path to Git directory is '{}'", pathToGitProject);
-        final Path projectPath = gitPath.getParent(); // Path of parent of dir of /HEAD
-        final String projectName = projectPath.toFile().getName();
+        final String projectName = GitRepositoryNameResolver.resolveName(file);
         LOGGER.debug ("Git Project name is '{}'", projectName);
         gitRepositoryDescriptor.setName(projectName);
-        // For some reason the file name is presented in the neo4j console ...
-        // TODO: The file name is not representative - use the project name instead?
         gitRepositoryDescriptor.setFileName(pathToGitProject);
     }
 
