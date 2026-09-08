@@ -1,5 +1,6 @@
 package de.kontext_e.jqassistant.plugin.git.store.descriptor;
 
+import com.buschmais.xo.neo4j.api.annotation.Indexed;
 import com.buschmais.xo.neo4j.api.annotation.Label;
 import com.buschmais.xo.neo4j.api.annotation.Property;
 import com.buschmais.xo.neo4j.api.annotation.Relation;
@@ -10,6 +11,12 @@ import java.util.List;
 @Label("Commit")
 public interface GitCommitDescriptor extends GitDescriptor {
 
+    // Indexed: JQAssistantGitRepository#getCommitDescriptorFromDB looks commits up by
+    // SHA ("MATCH (c:Commit) WHERE c.sha = $sha"). Without an index every lookup is a
+    // full scan of the :Commit label, which dominates incremental scans and any
+    // downstream plugin resolving commits from the store. Not unique: the same SHA
+    // legitimately appears in several repositories (forks, shared history).
+    @Indexed
     @Property("sha")
     String getSha();
     void setSha(String sha);
