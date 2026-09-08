@@ -66,8 +66,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store, times(2)).create(GitBranchDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMIT]->(c:Commit) WHERE repo.fileName = $path AND c.sha = $sha RETURN c", Map.of("path", ".git", "sha", "1234"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMIT]->(c:Commit) WHERE repo.fileName = $path AND c.sha = $sha RETURN c", Map.of("path", ".git", "sha", "5678"));
     }
 
     @Test
@@ -104,8 +104,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         verify(store, times(2)).create(GitTagDescriptor.class);
         verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_TAG]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
-        verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMIT]->(c:Commit) WHERE repo.fileName = $path AND c.sha = $sha RETURN c", Map.of("path", ".git", "sha", "1234"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMIT]->(c:Commit) WHERE repo.fileName = $path AND c.sha = $sha RETURN c", Map.of("path", ".git", "sha", "5678"));
     }
 
     @Test
@@ -151,14 +151,14 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     void testAddAuthor() throws IOException {
         Store store = spy(super.store);
         //Also verify that apostrophes in the authors' name work
-        when(store.executeQuery("MATCH (a:Author) where a.identString = $ident return a", Map.of("ident", "Au'thor<Au'thor@e-mail.com>"))).thenThrow(NoSuchElementException.class);
+        when(store.executeQuery("MATCH (repo:Git:Repository)-[:HAS_AUTHOR]->(a:Author) WHERE repo.fileName = $path AND a.identString = $ident RETURN a", Map.of("path", ".git", "ident", "Au'thor<Au'thor@e-mail.com>"))).thenThrow(NoSuchElementException.class);
         GitCommit gitCommit = CommitBuilder.builder().author("Au'thor<Au'thor@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitAuthorDescriptor.class);
-        verify(store).executeQuery("MATCH (a:Author) where a.identString = $ident return a", Map.of("ident", "Au'thor<Au'thor@e-mail.com>"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_AUTHOR]->(a:Author) WHERE repo.fileName = $path AND a.identString = $ident RETURN a", Map.of("path", ".git", "ident", "Au'thor<Au'thor@e-mail.com>"));
         verify(gitRepositoryDescriptor).getAuthors();
     }
 
@@ -167,6 +167,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         Store store = spy(super.store);
         GitAuthorDescriptor authorDescriptor = super.store.create(GitAuthorDescriptor.class);
         authorDescriptor.setIdentString("Author<Author@e-mail.com>");
+        // a previous scan would have linked the author to the repository
+        gitRepositoryDescriptor.getAuthors().add(authorDescriptor);
         GitCommit gitCommit = CommitBuilder.builder().author("Author<Author@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
@@ -196,6 +198,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         GitCommit parentCommit = CommitBuilder.builder().sha("1234").build();
         GitCommitDescriptor parentDescriptor = store.create(GitCommitDescriptor.class);
         parentDescriptor.setSha(parentCommit.getSha());
+        // a previous scan would have linked the commit to the repository
+        gitRepositoryDescriptor.getCommits().add(parentDescriptor);
         // Child Commit is new, has reference to parent and is returned by jgit
         GitCommit childCommit = CommitBuilder.builder().sha("5678").parents(List.of(parentCommit)).build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(childCommit).build();
@@ -211,14 +215,14 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     @Test
     void testAddCommitter() throws IOException {
         Store store = spy(super.store);
-        when(store.executeQuery("MATCH (c:Committer) where c.identString = $ident return c", Map.of("ident", "Committer<Committer@e-mail.com>"))).thenThrow(NoSuchElementException.class);
+        when(store.executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMITTER]->(c:Committer) WHERE repo.fileName = $path AND c.identString = $ident RETURN c", Map.of("path", ".git", "ident", "Committer<Committer@e-mail.com>"))).thenThrow(NoSuchElementException.class);
         GitCommit gitCommit = CommitBuilder.builder().committer("Committer<Committer@e-mail.com>").build();
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder().withCommits(gitCommit).build();
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store).create(GitCommitterDescriptor.class);
-        verify(store).executeQuery("MATCH (c:Committer) where c.identString = $ident return c", Map.of("ident", "Committer<Committer@e-mail.com>"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_COMMITTER]->(c:Committer) WHERE repo.fileName = $path AND c.identString = $ident RETURN c", Map.of("path", ".git", "ident", "Committer<Committer@e-mail.com>"));
         verify(gitRepositoryDescriptor).getCommits();
     }
 
@@ -380,7 +384,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
-        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(b:Branch)-[:HAS_HEAD]->(n:Commit) WHERE repo.fileName = $path AND b.name = $name RETURN n.sha", Map.of("path", ".git", "name", "branch"));
     }
 
     @Test
@@ -398,6 +402,6 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, range, jGitRepository, false).scanGitRepo();
 
         verify(jGitRepository).findCommits("12345..HEAD");
-        verify(store).executeQuery("MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha", Map.of("sha", "branch"));
+        verify(store).executeQuery("MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(b:Branch)-[:HAS_HEAD]->(n:Commit) WHERE repo.fileName = $path AND b.name = $name RETURN n.sha", Map.of("path", ".git", "name", "branch"));
     }
 }

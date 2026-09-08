@@ -11,17 +11,21 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+/**
+ * Lookups of already scanned nodes.
+ * <p>
+ * Every query is anchored on the repository being scanned. None of the
+ * identifying properties is globally unique: the same commit SHA occurs in
+ * forks and mirrors, a relative path such as {@code pom.xml} occurs in almost
+ * every repository, and branch names like {@code heads/master} occur in all of
+ * them. Since each lookup returns the first row, an unanchored query would
+ * hand the scanner an arbitrary node belonging to some other repository.
+ */
 public class JQAssistantGitRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantGitRepository.class);
 
     public static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
-        // Typed single hop instead of an unbounded "-[*]->": GitRepositoryDescriptor
-        // declares HAS_BRANCH directly. The variable-length pattern traversed EVERY
-        // relationship type at unlimited depth -- including HAS_COMMIT into the whole
-        // commit history and onwards -- just to find the repository's branches. On an
-        // empty store that is free; on a populated one it explores the entire reachable
-        // graph on every incremental scan.
         String query = "MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(branch:Branch) WHERE repo.fileName = $path RETURN branch";
         try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitBranchDescriptor> branches = new HashMap<>();
@@ -37,7 +41,6 @@ public class JQAssistantGitRepository {
     }
 
     public static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
-        // See importExistingBranchesFromStore: HAS_TAG is a direct relation.
         String query = "MATCH (repo:Git:Repository)-[:HAS_TAG]->(t:Tag) WHERE repo.fileName = $path RETURN t";
         try (Result<CompositeRowObject> result = store.executeQuery(query,  Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitTagDescriptor> tags = new HashMap<>();
@@ -52,9 +55,10 @@ public class JQAssistantGitRepository {
         return new HashMap<>();
     }
 
-    public static String findShaOfLatestScannedCommitOfBranch(Store store, String branch) {
-        String query = "MATCH (b:Branch)-[:HAS_HEAD]->(n:Commit) where b.name = $sha return n.sha";
-        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("sha", branch))) {
+    public static String findShaOfLatestScannedCommitOfBranch(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, String branch) {
+        String query = "MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(b:Branch)-[:HAS_HEAD]->(n:Commit) " +
+                       "WHERE repo.fileName = $path AND b.name = $name RETURN n.sha";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName(), "name", branch))) {
             return result.iterator().next().get("n.sha", String.class);
         } catch (Exception e) {
             LOGGER.debug("Error while looking for most recent scanned commit: {}", String.valueOf(e));
@@ -63,7 +67,7 @@ public class JQAssistantGitRepository {
     }
 
     public static GitRepositoryDescriptor getExistingRepositoryDescriptor(Store store, String absolutePath) {
-        String query = "MATCH (c:Repository) where c.fileName = $path return c";
+        String query = "MATCH (c:Git:Repository) where c.fileName = $path return c";
         try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", absolutePath))) {
             return result.iterator().next().get("c", GitRepositoryDescriptor.class);
         } catch (Exception e) {
@@ -72,36 +76,36 @@ public class JQAssistantGitRepository {
         }
     }
 
-    public static GitCommitDescriptor getCommitDescriptorFromDB(Store store, String sha) {
-        String query = "MATCH (c:Commit) where c.sha = $sha return c";
-        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("sha", sha))) {
+    public static GitCommitDescriptor getCommitDescriptorFromDB(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, String sha) {
+        String query = "MATCH (repo:Git:Repository)-[:HAS_COMMIT]->(c:Commit) WHERE repo.fileName = $path AND c.sha = $sha RETURN c";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName(), "sha", sha))) {
             return result.iterator().next().get("c", GitCommitDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
         }
     }
 
-    public static GitAuthorDescriptor getAuthorDescriptorFromDB(Store store, String identString) {
-        String query = "MATCH (a:Author) where a.identString = $ident return a";
-        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("ident", identString))) {
+    public static GitAuthorDescriptor getAuthorDescriptorFromDB(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, String identString) {
+        String query = "MATCH (repo:Git:Repository)-[:HAS_AUTHOR]->(a:Author) WHERE repo.fileName = $path AND a.identString = $ident RETURN a";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName(), "ident", identString))) {
             return result.iterator().next().get("a", GitAuthorDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
         }
     }
 
-    public static GitCommitterDescriptor getCommitterDescriptorFromDB(Store store, String identString) {
-        String query = "MATCH (c:Committer) where c.identString = $ident return c";
-        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("ident", identString))) {
+    public static GitCommitterDescriptor getCommitterDescriptorFromDB(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, String identString) {
+        String query = "MATCH (repo:Git:Repository)-[:HAS_COMMITTER]->(c:Committer) WHERE repo.fileName = $path AND c.identString = $ident RETURN c";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName(), "ident", identString))) {
             return result.iterator().next().get("c", GitCommitterDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
         }
     }
 
-    public static GitFileDescriptor getFileDescriptorFromDB(Store store, String relativePath) {
-        String query = "MATCH (f:Git:File) where f.relativePath = $path return f";
-        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", relativePath))) {
+    public static GitFileDescriptor getFileDescriptorFromDB(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, String relativePath) {
+        String query = "MATCH (repo:Git:Repository)-[:HAS_FILE]->(f:Git:File) WHERE repo.fileName = $path AND f.relativePath = $relativePath RETURN f";
+        try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName(), "relativePath", relativePath))) {
             return result.iterator().next().get("f", GitFileDescriptor.class);
         } catch (NoSuchElementException e){
             return null;
