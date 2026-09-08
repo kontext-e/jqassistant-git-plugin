@@ -16,7 +16,13 @@ public class JQAssistantGitRepository {
     private static final Logger LOGGER = LoggerFactory.getLogger(JQAssistantGitRepository.class);
 
     public static Map<String, GitBranchDescriptor> importExistingBranchesFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
-        String query = "MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch";
+        // Typed single hop instead of an unbounded "-[*]->": GitRepositoryDescriptor
+        // declares HAS_BRANCH directly. The variable-length pattern traversed EVERY
+        // relationship type at unlimited depth -- including HAS_COMMIT into the whole
+        // commit history and onwards -- just to find the repository's branches. On an
+        // empty store that is free; on a populated one it explores the entire reachable
+        // graph on every incremental scan.
+        String query = "MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(branch:Branch) WHERE repo.fileName = $path RETURN branch";
         try (Result<CompositeRowObject> result = store.executeQuery(query, Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitBranchDescriptor> branches = new HashMap<>();
             for (CompositeRowObject row : result) {
@@ -31,7 +37,8 @@ public class JQAssistantGitRepository {
     }
 
     public static Map<String, GitTagDescriptor> importExistingTagsFromStore(Store store, GitRepositoryDescriptor gitRepositoryDescriptor) {
-        String query = "MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t";
+        // See importExistingBranchesFromStore: HAS_TAG is a direct relation.
+        String query = "MATCH (repo:Git:Repository)-[:HAS_TAG]->(t:Tag) WHERE repo.fileName = $path RETURN t";
         try (Result<CompositeRowObject> result = store.executeQuery(query,  Map.of("path", gitRepositoryDescriptor.getFileName()))){
             Map<String, GitTagDescriptor> tags = new HashMap<>();
             for (CompositeRowObject row : result) {

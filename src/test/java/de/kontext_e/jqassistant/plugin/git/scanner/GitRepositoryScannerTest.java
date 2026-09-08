@@ -65,7 +65,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, times(2)).create(GitBranchDescriptor.class);
-        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
@@ -88,7 +88,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, never()).create(GitBranchDescriptor.class);
-        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_BRANCH]->(branch:Branch) WHERE repo.fileName = $path RETURN branch"), anyMap());
     }
 
     @Test
@@ -103,7 +103,7 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
         verify(store, times(2)).create(GitTagDescriptor.class);
-        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_TAG]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "1234"));
         verify(store).executeQuery("MATCH (c:Commit) where c.sha = $sha return c", Map.of("sha", "5678"));
     }
@@ -112,11 +112,12 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
     void testScanExistingTags() throws IOException {
         Store store = spy(super.store);
 
-        GitTagDescriptor gitBranchDescriptor = super.store.create(GitTagDescriptor.class);
-        gitBranchDescriptor.setLabel("master");
+        GitTagDescriptor gitTagDescriptor = super.store.create(GitTagDescriptor.class);
+        gitTagDescriptor.setLabel("master");
         GitCommitDescriptor headDescriptor = super.store.create(GitCommitDescriptor.class);
         headDescriptor.setSha("1234");
         gitRepositoryDescriptor.setHead(headDescriptor);
+        gitRepositoryDescriptor.getTags().add(gitTagDescriptor);
 
         JGitRepository jGitRepository = new JGitRepositoryGitMockBuilder()
                 .withTags(new GitTag("master", "1234"))
@@ -124,8 +125,8 @@ class GitRepositoryScannerTest extends AbstractPluginIT {
 
         new GitRepositoryScanner(store, gitRepositoryDescriptor, null, jGitRepository, false).scanGitRepo();
 
-        verify(store, never()).create(GitBranchDescriptor.class);
-        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[*]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
+        verify(store, never()).create(GitTagDescriptor.class);
+        verify(store).executeQuery(eq("MATCH (repo:Git:Repository)-[:HAS_TAG]->(t:Tag) WHERE repo.fileName = $path RETURN t"), anyMap());
     }
 
     @Test
