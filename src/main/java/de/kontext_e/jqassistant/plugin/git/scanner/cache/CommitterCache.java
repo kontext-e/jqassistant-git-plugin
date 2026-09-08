@@ -1,6 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner.cache;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitCommitterDescriptor;
 
 import java.util.HashMap;
@@ -14,10 +15,12 @@ public class CommitterCache {
 
     private final Map<String, GitCommitterDescriptor> committers = new HashMap<>();
     private final Store store;
+    private final GitRepositoryDescriptor gitRepositoryDescriptor;
     private final boolean isFreshScan;
 
-    public CommitterCache(final Store store, boolean isFreshScan) {
+    public CommitterCache(final Store store, GitRepositoryDescriptor gitRepositoryDescriptor, boolean isFreshScan) {
         this.store = store;
+        this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.isFreshScan = isFreshScan;
     }
 
@@ -38,7 +41,7 @@ public class CommitterCache {
             return committers.get(identString);
         } else {
             if (isFreshScan) return null;
-            GitCommitterDescriptor committerDescriptor = getCommitterDescriptorFromDB(store, identString);
+            GitCommitterDescriptor committerDescriptor = getCommitterDescriptorFromDB(store, gitRepositoryDescriptor, identString);
             if (committerDescriptor != null) {
                 addToCache(committerDescriptor);
             }

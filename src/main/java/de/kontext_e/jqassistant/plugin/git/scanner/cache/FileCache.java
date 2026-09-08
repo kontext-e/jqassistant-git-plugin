@@ -1,6 +1,7 @@
 package de.kontext_e.jqassistant.plugin.git.scanner.cache;
 
 import com.buschmais.jqassistant.core.store.api.Store;
+import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitRepositoryDescriptor;
 import de.kontext_e.jqassistant.plugin.git.store.descriptor.GitFileDescriptor;
 
 import java.util.ArrayList;
@@ -14,10 +15,12 @@ public class FileCache {
 
     private final Map<String, GitFileDescriptor> files = new HashMap<>();
     private final Store store;
+    private final GitRepositoryDescriptor gitRepositoryDescriptor;
     private final boolean isFreshScan;
 
-    public FileCache(Store store, boolean isFreshScan) {
+    public FileCache(Store store, GitRepositoryDescriptor gitRepositoryDescriptor, boolean isFreshScan) {
         this.store = store;
+        this.gitRepositoryDescriptor = gitRepositoryDescriptor;
         this.isFreshScan = isFreshScan;
     }
 
@@ -38,7 +41,7 @@ public class FileCache {
             return files.get(relativePath);
         } else {
             if (isFreshScan) return null;
-            GitFileDescriptor gitFileDescriptor = getFileDescriptorFromDB(store, relativePath);
+            GitFileDescriptor gitFileDescriptor = getFileDescriptorFromDB(store, gitRepositoryDescriptor, relativePath);
             if (gitFileDescriptor != null) {
                 addToCache(gitFileDescriptor);
             }

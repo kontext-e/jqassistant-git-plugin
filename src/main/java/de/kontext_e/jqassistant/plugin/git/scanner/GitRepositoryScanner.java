@@ -40,10 +40,10 @@ public class GitRepositoryScanner {
         this.range = range;
         this.jGitRepository = jGitRepository;
 
-        this.commitCache = new CommitCache(store, isFreshScan);
-        this.authorCache = new AuthorCache(store, isFreshScan);
-        this.committerCache = new CommitterCache(store, isFreshScan);
-        this.fileCache = new FileCache(store, isFreshScan);
+        this.commitCache = new CommitCache(store, gitRepositoryDescriptor, isFreshScan);
+        this.authorCache = new AuthorCache(store, gitRepositoryDescriptor, isFreshScan);
+        this.committerCache = new CommitterCache(store, gitRepositoryDescriptor, isFreshScan);
+        this.fileCache = new FileCache(store, gitRepositoryDescriptor, isFreshScan);
         this.tagCache = new TagCache(store, gitRepositoryDescriptor);
         this.branchCache = new BranchCache(store, gitRepositoryDescriptor);
 
@@ -73,7 +73,7 @@ public class GitRepositoryScanner {
         GitBranchDescriptor gitBranchDescriptor = resolveSpecifiedBranch(untilPartOfRange);
 
         if (gitBranchDescriptor != null) {
-            String sha = findShaOfLatestScannedCommitOfBranch(store, gitBranchDescriptor.getName());
+            String sha = findShaOfLatestScannedCommitOfBranch(store, gitRepositoryDescriptor, gitBranchDescriptor.getName());
             if (sha != null) {
                 range = sha + ".." + untilPartOfRange;
                 LOGGER.info("Found already scanned commit with SHA: {} using it as range...", sha);
