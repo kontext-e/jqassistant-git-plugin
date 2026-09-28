@@ -22,7 +22,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 
 project.ext["jqaversion"] = "2.4.0"
 project.group = 'de.kontext-e.jqassistant.plugin'
-project.version = '2.4.1'
+project.version = '2.4.2'
 
 repositories {
     maven {
